@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Local test images
+user.jpg
+dress.jpg
+
+# Old entry files
+app.py
+
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+tests/
+
+# Temporary files
+*.log
+*.tmp
+
+# Uploads
+uploads/
+
+# Old experiments
+testimage.py
+pipeline.py
+
+# Generated outputs
+outputs/images/*
+outputs/json/*
+
+# Keep folder structure
+!outputs/images/.gitkeep
+!outputs/json/.gitkeep
+!outputs/module1/.gitkeep
+!outputs/module2/.gitkeep
+!outputs/module3/.gitkeep
+!outputs/module4/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
