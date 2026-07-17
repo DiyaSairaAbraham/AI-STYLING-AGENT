@@ -3,7 +3,9 @@ __pycache__/
 *.py[cod]
 *.pyo
 
-*.jpg
+# Ignore generated/user images
+uploads/*.jpg
+outputs/**/*.jpg
 # Local test images
 user.jpg
 dress.jpg
@@ -33,7 +35,7 @@ uploads/
 
 # Old experiments
 testimage.py
-pipeline.py
+#pipeline.py
 
 # Generated outputs
 outputs/images/*
