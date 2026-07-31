@@ -31,7 +31,10 @@ class Module1Output(BaseModel):
 
 # MODULE 2- WARDROBE TAGGING
 class WardrobeItemTags(BaseModel):
-    id_baju: str |None=None
+    id_baju: str | None = None
+
+    image_path: str | None = None
+
     category: str
     sub_category: str
     color: str
@@ -48,7 +51,9 @@ class SelectedWardrobeItem(BaseModel):
     id_baju: str
     description: str
 
-
+class ShoppingLinks(BaseModel):
+    hm: str
+    uniqlo: str
 
 class OutfitRecommendation(BaseModel):
     category: str = Field(
@@ -66,6 +71,8 @@ class OutfitRecommendation(BaseModel):
     image_generation_prompt: str = Field(
         description="Detailed prompt for generating the outfit image"
     )
+
+    shopping_links: Optional[ShoppingLinks] = None
 
 
 

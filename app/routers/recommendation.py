@@ -1,39 +1,45 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
 import os
 import shutil
 
-from app.services.pipeline_service import run_full_pipeline
+from fastapi import APIRouter, UploadFile, File
+from fastapi.responses import JSONResponse
+
+from agents.vision_agent import analyze_user_image
+from agents.stylist_agent import generate_style_recommendation
+from utils.wardrobe_manager import build_wardrobe_database
+from agents.shopping_agent import create_search_links
 
 
 router = APIRouter(
     prefix="/recommendation",
-    tags=["Recommendation"]
+    tags=["Recommendation Options"],
 )
 
 
 UPLOAD_DIR = "uploads"
 
 
-@router.post("/generate")
-async def generate_recommendation(
+@router.post("/options")
+async def generate_options(
     user_image: UploadFile = File(...)
 ):
 
     try:
 
+        # Create upload directory
         os.makedirs(
             UPLOAD_DIR,
             exist_ok=True
         )
 
 
+        # Save uploaded image
         image_path = os.path.join(
             UPLOAD_DIR,
             user_image.filename
         )
 
 
-        # Save user image
         with open(
             image_path,
             "wb"
@@ -46,20 +52,42 @@ async def generate_recommendation(
 
 
         print(
-            "[INFO] Starting AI Stylist Pipeline"
+            "[INFO] Running fast recommendation flow"
         )
 
 
-        # Run complete AI stylist pipeline
-        result = run_full_pipeline(
-            user_image_path=image_path,
-            wardrobe_path="wardrobe"
+        # -----------------------------------
+        # Module 1: Vision Agent
+        # -----------------------------------
+
+        user_profile = analyze_user_image(
+            image_path
         )
 
 
-        print(
-            "[INFO] Recommendation completed"
+        # -----------------------------------
+        # Module 2: Wardrobe Agent
+        # -----------------------------------
+
+        wardrobe_data = build_wardrobe_database(
+            "wardrobe"
         )
+
+
+        # -----------------------------------
+        # Module 3: Stylist Agent
+        # -----------------------------------
+
+        recommendations = generate_style_recommendation(
+            user_profile,
+            wardrobe_data
+        )
+# -----------------------------------
+# Module 4: Shopping Agent
+# -----------------------------------
+
+        for outfit in recommendations.recommendations:
+            outfit.shopping_links = create_search_links(outfit)
 
 
         return {
@@ -67,10 +95,13 @@ async def generate_recommendation(
             "status": "success",
 
             "message":
-            "Outfit recommendation generated",
+                "Outfit options generated",
+
+            "user_image_path":
+                image_path,
 
             "data":
-            result
+                recommendations
 
         }
 
@@ -83,19 +114,19 @@ async def generate_recommendation(
         )
 
 
-        raise HTTPException(
+        return JSONResponse(
 
             status_code=500,
 
-            detail={
+            content={
 
                 "status": "failed",
 
                 "message":
-                "Unable to generate outfit recommendation",
+                    "Unable to generate outfit options",
 
                 "error":
-                str(e)
+                    str(e)
 
             }
 

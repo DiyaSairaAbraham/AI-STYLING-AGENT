@@ -151,7 +151,7 @@ async def add_item(
 # List wardrobe
 # =========================
 
-@router.get("/")
+@router.get("")
 def get_wardrobe():
 
     try:

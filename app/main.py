@@ -1,85 +1,106 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+import os
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.routers import health
 from app.routers import vision
 from app.routers import wardrobe
 from app.routers import recommendation
+from app.routers import image_generation
 
 
-app = FastAPI(
-    title="AI Stylist API"
+# Ensure static folders exist
+os.makedirs(
+    "outputs",
+    exist_ok=True
+)
+
+os.makedirs(
+    "wardrobe",
+    exist_ok=True
 )
 
 
-# =========================
-# Root Endpoint
-# =========================
 
-@app.get("/")
-def root():
-
-    return {
-        "status": "success",
-        "message": "AI Stylist API is running",
-        "docs": "/docs",
-        "health": "/health"
-    }
+app = FastAPI(
+    title="AI Styling Agent API",
+    version="1.0.0"
+)
 
 
-# =========================
-# Global Exception Handler
-# =========================
 
-@app.exception_handler(Exception)
-async def global_exception_handler(
-    request: Request,
-    exc: Exception
-):
+app.add_middleware(
+    CORSMiddleware,
 
-    print(
-        f"[ERROR] {request.url.path}: {exc}"
-    )
+    allow_origins=["*"],
 
-    return JSONResponse(
-        status_code=500,
-        content={
-            "status": "failed",
-            "message": "Internal Server Error"
-        }
-    )
+    allow_credentials=True,
+
+    allow_methods=["*"],
+
+    allow_headers=["*"],
+)
 
 
-# =========================
+
+# Generated outfit images
+app.mount(
+    "/outputs",
+    StaticFiles(
+        directory="outputs"
+    ),
+    name="outputs"
+)
+
+
+
+# Wardrobe clothing images
+app.mount(
+    "/clothes",
+    StaticFiles(
+        directory="wardrobe"
+    ),
+    name="clothes"
+)
+
+
+
+
 # Routers
-# =========================
 
 app.include_router(
     health.router
 )
 
+
 app.include_router(
     vision.router
 )
 
+
 app.include_router(
     wardrobe.router
 )
+
 
 app.include_router(
     recommendation.router
 )
 
 
-# =========================
-# Static Images
-# =========================
-
-app.mount(
-    "/images",
-    StaticFiles(
-        directory="outputs/images"
-    ),
-    name="images"
+app.include_router(
+    image_generation.router
 )
+
+
+
+
+@app.get("/")
+def home():
+
+    return {
+        "message":
+        "AI Styling Agent API running"
+    }

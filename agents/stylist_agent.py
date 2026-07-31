@@ -5,6 +5,7 @@ from schemas.models import Module3Output
 from utils.logger import log
 
 import json
+import random
 
 
 client = OpenAI(
@@ -22,7 +23,10 @@ def generate_style_recommendation(
     log(
         "Running Stylist Agent (Module 3)"
     )
-
+    variation_seed = random.randint(
+    1000,
+    9999
+    )
 
 
     if hasattr(
@@ -55,7 +59,7 @@ def generate_style_recommendation(
                 item
             )
 
-
+    random.shuffle(wardrobe_data)
 
 
     context_prompt = f"""
@@ -70,7 +74,37 @@ You will be given:
 
 TASK:
 
+TASK:
+
 Create EXACTLY 3 outfit recommendations.
+
+Each recommendation request should generate different combinations whenever the wardrobe allows.
+
+Do not repeatedly select the same clothing pieces across requests.
+
+If multiple suitable items exist, intentionally vary your selections.
+
+Prioritize diversity over consistency while still maintaining good fashion sense.
+
+Variation ID:
+This request must produce outfit combinations that are
+different from previous requests whenever possible.
+
+Variation ID:
+
+Treat this variation ID as a unique styling session.
+
+When multiple clothing items satisfy the same requirement,
+prefer different choices from previous styling sessions.
+
+Randomly explore different colour combinations,
+layering styles,
+accessories,
+and shoe pairings.
+
+Never always choose the first matching wardrobe item.
+
+Use this variation ID to explore different outfit combinations.
 
 
 Categories:
@@ -93,12 +127,13 @@ For each outfit provide:
 
 Rules:
 
+
 - Only use wardrobe database items.
 - Do not invent clothes.
 - Do not repeat outfit combinations.
-- Maintain user's identity.
-- Maintain hairstyle, skin tone and body proportions.
-
+- Prefer different clothing pieces across different requests.
+- Avoid always selecting the first suitable clothing items.
+- Explore different color combinations and styling approaches.
 
 IMAGE REQUIREMENTS:
 
@@ -133,6 +168,7 @@ Return ONLY structured output.
         completion = client.beta.chat.completions.parse(
 
             model=STYLIST_MODEL,
+            
 
             messages=[
 
