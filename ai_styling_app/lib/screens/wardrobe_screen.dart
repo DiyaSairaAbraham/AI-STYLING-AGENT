@@ -133,7 +133,7 @@ extends State<WardrobeScreen>{
     await service.deleteClothing(id);
 
 
-    loadWardrobe();
+    await loadWardrobe();
 
 
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../models/recommendation.dart';
 import '../services/api_service.dart';
 import 'outfit_result_screen.dart';
 
@@ -90,10 +90,12 @@ class _OptionsScreenState extends State<OptionsScreen> {
 
           MaterialPageRoute(
 
-            builder: (_) =>
-                OutfitResultScreen(
+            builder: (_) => OutfitResultScreen(
 
               imageUrl: imageUrl,
+              recommendation: Recommendation.fromJson(
+        outfit,
+              ),
 
             ),
 

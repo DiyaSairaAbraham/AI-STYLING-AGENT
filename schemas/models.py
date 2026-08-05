@@ -106,33 +106,49 @@ class SelectedWardrobeItem(BaseModel):
 
 
 
+# Individual item shopping links
+class ItemShoppingLink(BaseModel):
+
+    id_baju: str
+
+    description: str
+
+    hm: Optional[str] = None
+
+    uniqlo: Optional[str] = None
+
+
+
+# Complete shopping links for outfit
 class ShoppingLinks(BaseModel):
 
-    hm: str
-
-    uniqlo: str
+    items: List[ItemShoppingLink] = []
 
 
 
 class OutfitRecommendation(BaseModel):
 
     category: str = Field(
-        description="Outfit style category, for example Business Formal, Smart Casual, Weekend Casual"
+        description=
+        "Outfit style category, for example Business Formal, Smart Casual, Weekend Casual"
     )
 
 
     selected_items: List[SelectedWardrobeItem] = Field(
-        description="Wardrobe items selected for this outfit"
+        description=
+        "Wardrobe items selected for this outfit"
     )
 
 
     styling_advice: str = Field(
-        description="Explanation of why this outfit suits the user"
+        description=
+        "Explanation of why this outfit suits the user"
     )
 
 
     image_generation_prompt: str = Field(
-        description="Detailed prompt for generating the outfit image"
+        description=
+        "Detailed prompt for generating the outfit image"
     )
 
 
@@ -143,7 +159,8 @@ class OutfitRecommendation(BaseModel):
 class Module3Output(BaseModel):
 
     recommendations: List[OutfitRecommendation] = Field(
-        description="Exactly 3 outfit recommendations"
+        description=
+        "Exactly 3 outfit recommendations"
     )
 
 
