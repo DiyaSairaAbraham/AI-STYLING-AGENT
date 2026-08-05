@@ -1,0 +1,1090 @@
+[
+    {
+        "id_baju": "dress1",
+        "image_path": "/clothes/dress1.jpg",
+        "category": "Outerwear",
+        "sub_category": "Denim jacket",
+        "color": "Light wash blue denim",
+        "material": "Cotton denim",
+        "fit": "Regular fit",
+        "style": "Casual, vintage, streetwear",
+        "pattern": "Solid with distressed/ripped detailing",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Casual outings",
+            "Weekend wear",
+            "Streetwear looks",
+            "Layering",
+            "Travel",
+            "Daytime errands"
+        ]
+    },
+    {
+        "id_baju": "dress10",
+        "image_path": "/clothes/dress10.jpg",
+        "category": "Dresses",
+        "sub_category": "sleeveless linen dress / tunic dress",
+        "color": "off-white / ivory",
+        "material": "linen or linen-blend woven fabric",
+        "fit": "relaxed, flowy A-line",
+        "style": "minimalist, resort, breezy summer",
+        "pattern": "solid with subtle slub texture",
+        "formality_level": "casual to smart casual",
+        "suitable_occasions": [
+            "beach vacation",
+            "resort wear",
+            "summer casual outing",
+            "brunch",
+            "daytime events",
+            "relaxed social gatherings"
+        ]
+    },
+    {
+        "id_baju": "dress11",
+        "image_path": "/clothes/dress11.jpg",
+        "category": "tops",
+        "sub_category": "sleeveless blouse / tunic top",
+        "color": "lime green / olive green",
+        "material": "lightweight cotton or cotton-blend woven fabric",
+        "fit": "relaxed",
+        "style": "bohemian, feminine, artisanal",
+        "pattern": "small floral block print",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "casual outings",
+            "summer daytime wear",
+            "vacation",
+            "brunch",
+            "resort wear",
+            "shopping"
+        ]
+    },
+    {
+        "id_baju": "dress2",
+        "image_path": "/clothes/dress2.jpg",
+        "category": "Outerwear",
+        "sub_category": "Traditional robe / kimono-style jacket",
+        "color": "Deep red with gold, black, and orange accents",
+        "material": "Woven fabric, likely cotton or wool blend with embroidered trim",
+        "fit": "Loose / relaxed",
+        "style": "Traditional / ethnic / bohemian",
+        "pattern": "Solid body with geometric embroidered border detailing",
+        "formality_level": "Semi-formal / festive",
+        "suitable_occasions": [
+            "cultural events",
+            "festivals",
+            "ceremonial occasions",
+            "performances",
+            "themed gatherings",
+            "smart-casual evening wear"
+        ]
+    },
+    {
+        "id_baju": "dress3",
+        "image_path": "/clothes/dress3.jpg",
+        "category": "Kidswear",
+        "sub_category": "Dress and cardigan set",
+        "color": "Pink cardigan with white multicolor floral dress",
+        "material": "Chunky knit cardigan, likely cotton or acrylic blend; lightweight woven cotton dress",
+        "fit": "Regular relaxed fit; A-line dress silhouette",
+        "style": "Sweet, playful, cottagecore, vintage-inspired children's outfit",
+        "pattern": "Solid knit cardigan with floral print dress",
+        "formality_level": "Casual to semi-casual",
+        "suitable_occasions": [
+            "playdates",
+            "birthday parties",
+            "garden parties",
+            "family gatherings",
+            "spring outings",
+            "casual daytime events"
+        ]
+    },
+    {
+        "id_baju": "dress4",
+        "image_path": "/clothes/dress4.jpg",
+        "category": "one-piece",
+        "sub_category": "spaghetti-strap floral dress",
+        "color": "multicolor floral with pink, red, purple, green, and white tones",
+        "material": "lightweight woven fabric, likely polyester or satin blend",
+        "fit": "slim/straight fit",
+        "style": "feminine summer romantic",
+        "pattern": "bold floral print",
+        "formality_level": "casual to smart casual",
+        "suitable_occasions": [
+            "summer outings",
+            "brunch",
+            "vacation",
+            "garden party",
+            "casual daytime events",
+            "beach/resort wear"
+        ]
+    },
+    {
+        "id_baju": "dress5",
+        "image_path": "/clothes/dress5.jpg",
+        "category": "Top",
+        "sub_category": "Long-sleeve floral blouse",
+        "color": "Black base with red, pink, burgundy, green, and blue floral accents",
+        "material": "Lightweight woven fabric, likely viscose/rayon or polyester blend",
+        "fit": "Relaxed / loose fit",
+        "style": "Romantic vintage / bohemian",
+        "pattern": "Floral rose print",
+        "formality_level": "Smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "brunch",
+            "date night",
+            "garden party",
+            "smart casual events",
+            "creative workplace"
+        ]
+    },
+    {
+        "id_baju": "dress6",
+        "image_path": "/clothes/dress6.jpg",
+        "category": "One-piece",
+        "sub_category": "Flutter-sleeve dress",
+        "color": "Mint green / aqua",
+        "material": "Satin or silk-like polyester blend",
+        "fit": "Flowy with cinched waist",
+        "style": "Elegant, feminine, romantic",
+        "pattern": "Solid",
+        "formality_level": "Semi-formal to formal",
+        "suitable_occasions": [
+            "wedding guest",
+            "cocktail party",
+            "formal dinner",
+            "garden party",
+            "evening event",
+            "special occasion"
+        ]
+    },
+    {
+        "id_baju": "dress7",
+        "image_path": "/clothes/dress7.jpg",
+        "category": "Dress",
+        "sub_category": "short-sleeve ruffle dress",
+        "color": "bright red / fuchsia",
+        "material": "lightweight chiffon or georgette-style synthetic fabric",
+        "fit": "relaxed, flowy, gathered waist",
+        "style": "feminine, romantic, tiered, ruffled",
+        "pattern": "solid",
+        "formality_level": "semi-formal",
+        "suitable_occasions": [
+            "party",
+            "date night",
+            "garden party",
+            "brunch",
+            "semi-formal event",
+            "holiday event"
+        ]
+    },
+    {
+        "id_baju": "dress8",
+        "image_path": "/clothes/dress8.jpg",
+        "category": "Dress",
+        "sub_category": "Halter dress",
+        "color": "Yellow, gray, black, and white",
+        "material": "Silky satin or lightweight polyester blend",
+        "fit": "Fit-and-flare",
+        "style": "Halter-neck sleeveless dress with tied neck and black waist sash",
+        "pattern": "Abstract floral / brushstroke print",
+        "formality_level": "Semi-formal",
+        "suitable_occasions": [
+            "Cocktail party",
+            "Summer event",
+            "Garden party",
+            "Vacation dinner",
+            "Evening outing",
+            "Semi-formal gathering"
+        ]
+    },
+    {
+        "id_baju": "dress9",
+        "image_path": "/clothes/dress9.jpg",
+        "category": "Dress",
+        "sub_category": "Sleeveless strappy sundress",
+        "color": "Black and white",
+        "material": "Lightweight woven fabric, likely rayon or viscose",
+        "fit": "Relaxed, flowy",
+        "style": "Bohemian summer casual",
+        "pattern": "Floral paisley print",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Casual outings",
+            "Summer wear",
+            "Beach vacation",
+            "Daytime events",
+            "Brunch"
+        ]
+    },
+    {
+        "id_baju": "jacket1",
+        "image_path": "/clothes/jacket1.jpg",
+        "category": "Outerwear",
+        "sub_category": "Blazer / suit jacket",
+        "color": "Light beige / cream",
+        "material": "Linen or linen-blend suiting fabric",
+        "fit": "Tailored fit",
+        "style": "Classic formal suit jacket / wedding blazer",
+        "pattern": "Solid with subtle woven texture",
+        "formality_level": "Formal",
+        "suitable_occasions": [
+            "Wedding",
+            "Formal event",
+            "Business formal",
+            "Garden party",
+            "Summer formal occasion"
+        ]
+    },
+    {
+        "id_baju": "jacket10",
+        "image_path": "/clothes/jacket10.jpg",
+        "category": "Outerwear",
+        "sub_category": "Zip-up bomber jacket",
+        "color": "Khaki / taupe",
+        "material": "Synthetic polyester or faux leather-look fabric with rib-knit trim",
+        "fit": "Regular fit",
+        "style": "Sporty casual bomber jacket",
+        "pattern": "Solid with minimal graphic text accents",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "casual outings",
+            "streetwear",
+            "travel",
+            "daily wear",
+            "cool weather",
+            "weekend activities"
+        ]
+    },
+    {
+        "id_baju": "jacket2",
+        "image_path": "/clothes/jacket2.jpg",
+        "category": "Formalwear",
+        "sub_category": "suit jacket / blazer",
+        "color": "black with white accents",
+        "material": "wool-blend suiting fabric; cotton dress shirt visible",
+        "fit": "slim fit",
+        "style": "classic formal, tuxedo-inspired",
+        "pattern": "solid",
+        "formality_level": "formal",
+        "suitable_occasions": [
+            "wedding",
+            "formal event",
+            "gala",
+            "black-tie occasion",
+            "business formal",
+            "ceremony"
+        ]
+    },
+    {
+        "id_baju": "jacket3",
+        "image_path": "/clothes/jacket3.jpg",
+        "category": "Outerwear",
+        "sub_category": "Blazer / suit jacket",
+        "color": "Royal blue",
+        "material": "Likely wool or wool-blend suiting fabric",
+        "fit": "Tailored / structured",
+        "style": "Classic formal blazer / suit jacket",
+        "pattern": "Solid exterior with patterned lining",
+        "formality_level": "Formal",
+        "suitable_occasions": [
+            "Business meetings",
+            "Formal events",
+            "Weddings",
+            "Cocktail events",
+            "Evening occasions",
+            "Smart business attire"
+        ]
+    },
+    {
+        "id_baju": "jacket4",
+        "image_path": "/clothes/jacket4.jpg",
+        "category": "outerwear",
+        "sub_category": "suit vest / waistcoat",
+        "color": "gray",
+        "material": "wool-blend suiting fabric with lined interior",
+        "fit": "tailored",
+        "style": "classic tailored formal, double-breasted",
+        "pattern": "windowpane plaid check",
+        "formality_level": "formal",
+        "suitable_occasions": [
+            "business meetings",
+            "formal events",
+            "weddings",
+            "office wear",
+            "cocktail events",
+            "smart casual occasions"
+        ]
+    },
+    {
+        "id_baju": "jacket5",
+        "image_path": "/clothes/jacket5.jpg",
+        "category": "Outerwear",
+        "sub_category": "Blazer / suit jacket",
+        "color": "Black",
+        "material": "Wool or polyester-blend suiting fabric",
+        "fit": "Tailored / structured",
+        "style": "Classic business formal",
+        "pattern": "Solid",
+        "formality_level": "Formal",
+        "suitable_occasions": [
+            "Business meetings",
+            "Office wear",
+            "Formal events",
+            "Weddings",
+            "Evening events",
+            "Smart casual occasions"
+        ]
+    },
+    {
+        "id_baju": "jacket6",
+        "image_path": "/clothes/jacket6.jpg",
+        "category": "outerwear",
+        "sub_category": "single-breasted blazer / suit jacket",
+        "color": "light gray / pale mint",
+        "material": "likely wool-blend or polyester-viscose suiting fabric",
+        "fit": "regular fit",
+        "style": "classic tailored formal blazer",
+        "pattern": "solid",
+        "formality_level": "formal",
+        "suitable_occasions": [
+            "business meetings",
+            "formal events",
+            "weddings",
+            "office wear",
+            "smart casual events"
+        ]
+    },
+    {
+        "id_baju": "jacket7",
+        "image_path": "/clothes/jacket7.jpg",
+        "category": "outerwear",
+        "sub_category": "suit jacket/blazer",
+        "color": "dark charcoal gray",
+        "material": "wool blend",
+        "fit": "regular fit",
+        "style": "business formal",
+        "pattern": "subtle pinstripe/solid",
+        "formality_level": "formal",
+        "suitable_occasions": [
+            "business meetings",
+            "office wear",
+            "job interviews",
+            "formal events",
+            "weddings",
+            "professional presentations"
+        ]
+    },
+    {
+        "id_baju": "jacket8",
+        "image_path": "/clothes/jacket8.jpg",
+        "category": "Outerwear",
+        "sub_category": "Hooded puffer jacket",
+        "color": "Blush pink",
+        "material": "Polyester/nylon shell with padded insulation and faux sherpa fleece lining",
+        "fit": "Regular fit",
+        "style": "Casual cozy hooded puffer jacket",
+        "pattern": "Solid with quilted stitching",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "cold weather",
+            "casual outings",
+            "winter wear",
+            "travel",
+            "school",
+            "weekend activities"
+        ]
+    },
+    {
+        "id_baju": "jacket9",
+        "image_path": "/clothes/jacket9.jpg",
+        "category": "outerwear",
+        "sub_category": "suit jacket / blazer",
+        "color": "black",
+        "material": "wool blend or suiting fabric",
+        "fit": "tailored",
+        "style": "classic business formal",
+        "pattern": "solid",
+        "formality_level": "formal",
+        "suitable_occasions": [
+            "business meetings",
+            "formal events",
+            "office wear",
+            "weddings",
+            "interviews",
+            "professional occasions"
+        ]
+    },
+    {
+        "id_baju": "pant1",
+        "image_path": "/clothes/pant1.jpg",
+        "category": "Bottoms",
+        "sub_category": "Jeans",
+        "color": "Light blue wash",
+        "material": "Denim cotton",
+        "fit": "Slim straight fit",
+        "style": "Casual denim",
+        "pattern": "Solid / faded wash",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Casual outings",
+            "Everyday wear",
+            "Weekend activities",
+            "Streetwear looks",
+            "Informal gatherings"
+        ]
+    },
+    {
+        "id_baju": "pant2",
+        "image_path": "/clothes/pant2.jpg",
+        "category": "Bottoms",
+        "sub_category": "Bermuda chino shorts",
+        "color": "camel brown / tan",
+        "material": "cotton twill",
+        "fit": "relaxed straight fit",
+        "style": "preppy vintage workwear",
+        "pattern": "solid",
+        "formality_level": "smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "summer wear",
+            "vacation",
+            "brunch",
+            "smart casual events",
+            "daytime social events"
+        ]
+    },
+    {
+        "id_baju": "pant3",
+        "image_path": "/clothes/pant3.jpg",
+        "category": "Bottoms",
+        "sub_category": "tailored ankle trousers",
+        "color": "pale mint green",
+        "material": "smooth woven stretch fabric, likely polyester blend",
+        "fit": "slim tapered fit",
+        "style": "minimalist, polished, tailored",
+        "pattern": "solid",
+        "formality_level": "business casual",
+        "suitable_occasions": [
+            "office wear",
+            "business casual events",
+            "smart casual outings",
+            "meetings",
+            "semi-formal daytime events"
+        ]
+    },
+    {
+        "id_baju": "pant4",
+        "image_path": "/clothes/pant4.jpg",
+        "category": "Bottoms",
+        "sub_category": "Denim shorts",
+        "color": "Light blue faded wash",
+        "material": "Denim, likely cotton blend",
+        "fit": "Slim/regular fit",
+        "style": "Casual streetwear, distressed denim",
+        "pattern": "Solid with faded wash and distressed/ripped details",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "casual outings",
+            "weekend wear",
+            "summer wear",
+            "streetwear looks",
+            "travel",
+            "daytime social events"
+        ]
+    },
+    {
+        "id_baju": "pant5",
+        "image_path": "/clothes/pant5.png",
+        "category": "Bottoms",
+        "sub_category": "Dress pants / tailored trousers",
+        "color": "Black",
+        "material": "Wool-blend suiting fabric",
+        "fit": "Slim tapered fit",
+        "style": "Classic tailored dress trousers",
+        "pattern": "Solid",
+        "formality_level": "Business formal",
+        "suitable_occasions": [
+            "office wear",
+            "business meetings",
+            "formal events",
+            "semi-formal occasions",
+            "smart casual outfits"
+        ]
+    },
+    {
+        "id_baju": "shirt1",
+        "image_path": "/clothes/shirt1.jpg",
+        "category": "Tops",
+        "sub_category": "Crew neck short-sleeve T-shirt",
+        "color": "Black",
+        "material": "Cotton jersey knit",
+        "fit": "Regular fit",
+        "style": "Minimalist basic casual",
+        "pattern": "Solid",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Everyday wear",
+            "Casual outings",
+            "Layering",
+            "Loungewear",
+            "Travel"
+        ]
+    },
+    {
+        "id_baju": "shirt10",
+        "image_path": "/clothes/shirt10.jpg",
+        "category": "tops",
+        "sub_category": "long-sleeve button-up shirt",
+        "color": "black",
+        "material": "satin or silk-like polyester blend",
+        "fit": "relaxed fit",
+        "style": "minimalist, elegant, classic button-up with gold-tone buttons",
+        "pattern": "solid",
+        "formality_level": "smart casual to semi-formal",
+        "suitable_occasions": [
+            "office wear",
+            "business casual",
+            "dinner",
+            "evening events",
+            "smart casual outings",
+            "semi-formal occasions"
+        ]
+    },
+    {
+        "id_baju": "shirt11",
+        "image_path": "/clothes/shirt11.jpg",
+        "category": "Top",
+        "sub_category": "Crew neck T-shirt",
+        "color": "Black",
+        "material": "Cotton or cotton-blend jersey",
+        "fit": "Regular fit",
+        "style": "Minimalist basic",
+        "pattern": "Solid",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Casual everyday wear",
+            "Lounging",
+            "Layering",
+            "Streetwear",
+            "Running errands"
+        ]
+    },
+    {
+        "id_baju": "shirt12",
+        "image_path": "/clothes/shirt12.jpg",
+        "category": "Top",
+        "sub_category": "Long-sleeve crew neck T-shirt",
+        "color": "Olive green, dark brown, black, beige, neon yellow accents",
+        "material": "Cotton or cotton-blend jersey knit",
+        "fit": "Regular fit",
+        "style": "Military-inspired streetwear",
+        "pattern": "Camouflage",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "casual outings",
+            "streetwear looks",
+            "weekend wear",
+            "outdoor activities",
+            "layering"
+        ]
+    },
+    {
+        "id_baju": "shirt13",
+        "image_path": "/clothes/shirt13.jpg",
+        "category": "Top",
+        "sub_category": "Long-sleeve button-up dress shirt",
+        "color": "Light blue",
+        "material": "Cotton or cotton-blend poplin",
+        "fit": "Regular fit",
+        "style": "Classic business / smart casual",
+        "pattern": "Solid",
+        "formality_level": "Business casual to formal",
+        "suitable_occasions": [
+            "office wear",
+            "business meetings",
+            "business casual events",
+            "interviews",
+            "smart casual occasions",
+            "formal daytime events"
+        ]
+    },
+    {
+        "id_baju": "shirt14",
+        "image_path": "/clothes/shirt14.jpg",
+        "category": "Top",
+        "sub_category": "Crew-neck T-shirt",
+        "color": "Dusty pink / rose",
+        "material": "Cotton jersey",
+        "fit": "Relaxed / oversized",
+        "style": "Minimal casual basic",
+        "pattern": "Solid",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Everyday wear",
+            "Casual outings",
+            "Loungewear",
+            "Weekend activities",
+            "Layering"
+        ]
+    },
+    {
+        "id_baju": "shirt15",
+        "image_path": "/clothes/shirt15.jpg",
+        "category": "Tops",
+        "sub_category": "Long-sleeve button-up shirt",
+        "color": "Cream/off-white with muted blue, gray, and tan stripes",
+        "material": "Cotton or cotton-blend woven fabric",
+        "fit": "Regular fit",
+        "style": "Classic casual, relaxed smart-casual",
+        "pattern": "Vertical stripes",
+        "formality_level": "Smart casual / business casual",
+        "suitable_occasions": [
+            "Casual outings",
+            "Business casual office",
+            "Smart-casual events",
+            "Weekend wear",
+            "Casual dinners"
+        ]
+    },
+    {
+        "id_baju": "shirt16",
+        "image_path": "/clothes/shirt16.jpg",
+        "category": "Tops",
+        "sub_category": "Long-sleeve collared button-down shirt",
+        "color": "Off-white/cream with dark vertical pinstripes",
+        "material": "Cotton or cotton-blend woven fabric",
+        "fit": "Slim fit",
+        "style": "Classic smart-casual button-down",
+        "pattern": "Vertical pinstripe",
+        "formality_level": "Smart casual / business casual",
+        "suitable_occasions": [
+            "office wear",
+            "business casual events",
+            "meetings",
+            "smart casual outings",
+            "dinner",
+            "semi-formal daytime events"
+        ]
+    },
+    {
+        "id_baju": "shirt17",
+        "image_path": "/clothes/shirt17.jpg",
+        "category": "Tops",
+        "sub_category": "long-sleeve button-down shirt",
+        "color": "sage green",
+        "material": "cotton or cotton-blend woven fabric",
+        "fit": "regular fit",
+        "style": "classic casual button-down",
+        "pattern": "solid",
+        "formality_level": "smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "smart casual events",
+            "office casual",
+            "weekend wear",
+            "daytime gatherings"
+        ]
+    },
+    {
+        "id_baju": "shirt18",
+        "image_path": "/clothes/shirt18.jpg",
+        "category": "Top",
+        "sub_category": "Sheer tie-front blouse",
+        "color": "Black",
+        "material": "Sheer organza or chiffon, likely polyester",
+        "fit": "Cropped relaxed fit with voluminous sleeves",
+        "style": "Romantic eveningwear / statement blouse",
+        "pattern": "Solid",
+        "formality_level": "Semi-formal",
+        "suitable_occasions": [
+            "Cocktail party",
+            "Evening event",
+            "Date night",
+            "Fashion event",
+            "Clubwear",
+            "Dinner outing"
+        ]
+    },
+    {
+        "id_baju": "shirt19",
+        "image_path": "/clothes/shirt19.jpg",
+        "category": "tops",
+        "sub_category": "crew neck t-shirt",
+        "color": "burnt orange",
+        "material": "cotton jersey",
+        "fit": "relaxed fit",
+        "style": "basic casual minimalist",
+        "pattern": "solid",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "everyday wear",
+            "casual outings",
+            "lounging",
+            "errands",
+            "summer wear",
+            "layering",
+            "streetwear casual"
+        ]
+    },
+    {
+        "id_baju": "shirt2",
+        "image_path": "/clothes/shirt2.jpg",
+        "category": "Top",
+        "sub_category": "short-sleeve crew neck t-shirt",
+        "color": "washed blue",
+        "material": "cotton jersey",
+        "fit": "relaxed / oversized",
+        "style": "casual graphic t-shirt with vintage washed finish",
+        "pattern": "graphic floral print",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "daily wear",
+            "casual outings",
+            "weekend activities",
+            "streetwear styling",
+            "lounging"
+        ]
+    },
+    {
+        "id_baju": "shirt3",
+        "image_path": "/clothes/shirt3.jpg",
+        "category": "Top",
+        "sub_category": "pullover hoodie",
+        "color": "dusty rose / muted mauve",
+        "material": "cotton-blend fleece knit",
+        "fit": "relaxed cropped fit",
+        "style": "casual athleisure",
+        "pattern": "solid",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "casual wear",
+            "lounging",
+            "streetwear",
+            "travel",
+            "light errands"
+        ]
+    },
+    {
+        "id_baju": "shirt4",
+        "image_path": "/clothes/shirt4.jpg",
+        "category": "tops",
+        "sub_category": "crewneck sweatshirt",
+        "color": "off-white / ivory with multicolor graphic print",
+        "material": "cotton or cotton-blend fleece knit",
+        "fit": "relaxed fit",
+        "style": "casual graphic streetwear",
+        "pattern": "graphic typography print with hearts",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "everyday wear",
+            "casual outings",
+            "lounging",
+            "weekend wear",
+            "school or campus",
+            "informal social events"
+        ]
+    },
+    {
+        "id_baju": "shirt5",
+        "image_path": "/clothes/shirt5.jpg",
+        "category": "Top",
+        "sub_category": "short-sleeve tunic shirt",
+        "color": "light heather gray",
+        "material": "linen or linen-cotton blend",
+        "fit": "relaxed loose fit",
+        "style": "minimalist rustic casual",
+        "pattern": "solid with subtle slub woven texture",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "casual daily wear",
+            "weekend outings",
+            "summer wear",
+            "resort wear",
+            "loungewear",
+            "beach vacation",
+            "casual gatherings"
+        ]
+    },
+    {
+        "id_baju": "shirt6",
+        "image_path": "/clothes/shirt6.jpg",
+        "category": "Tops",
+        "sub_category": "Crew neck short-sleeve T-shirt",
+        "color": "White",
+        "material": "100% cotton jersey",
+        "fit": "Relaxed / oversized",
+        "style": "Minimalist basic casual",
+        "pattern": "Solid / plain",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "everyday wear",
+            "casual outings",
+            "lounging",
+            "errands",
+            "layering",
+            "weekend wear"
+        ]
+    },
+    {
+        "id_baju": "shirt7",
+        "image_path": "/clothes/shirt7.jpg",
+        "category": "Tops",
+        "sub_category": "Long-sleeve mandarin-collar button-up shirt",
+        "color": "Natural off-white / oatmeal",
+        "material": "Linen or linen-blend woven fabric",
+        "fit": "Relaxed fit",
+        "style": "Minimalist, rustic, natural, resort casual",
+        "pattern": "Solid with natural slub texture",
+        "formality_level": "Casual to smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "summer wear",
+            "vacation",
+            "resort wear",
+            "beach trips",
+            "brunch",
+            "smart casual gatherings",
+            "everyday wear"
+        ]
+    },
+    {
+        "id_baju": "shirt8",
+        "image_path": "/clothes/shirt8.jpg",
+        "category": "Top",
+        "sub_category": "crew neck short-sleeve T-shirt",
+        "color": "bright orange",
+        "material": "cotton jersey knit",
+        "fit": "regular fit",
+        "style": "casual basic",
+        "pattern": "solid/plain",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "everyday wear",
+            "casual outings",
+            "lounging",
+            "school",
+            "weekend activities",
+            "summer casual wear"
+        ]
+    },
+    {
+        "id_baju": "shirt9",
+        "image_path": "/clothes/shirt9.jpg",
+        "category": "Tops",
+        "sub_category": "Crew neck sweater",
+        "color": "Navy blue with white stripes",
+        "material": "Textured knit, likely cotton/acrylic blend",
+        "fit": "Regular relaxed fit",
+        "style": "Casual nautical knitwear",
+        "pattern": "Horizontal stripes",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "casual outings",
+            "weekend wear",
+            "layering in cool weather",
+            "travel",
+            "everyday wear"
+        ]
+    },
+    {
+        "id_baju": "shoes1",
+        "image_path": "/clothes/shoes1.jpg",
+        "category": "Footwear",
+        "sub_category": "Low-top sneakers",
+        "color": "Black and white",
+        "material": "Suede or canvas upper with rubber sole",
+        "fit": "Standard lace-up fit",
+        "style": "Skate, streetwear, casual",
+        "pattern": "Colorblock with contrasting side stripe",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Casual outings",
+            "Streetwear looks",
+            "Everyday wear",
+            "Skateboarding",
+            "Weekend activities"
+        ]
+    },
+    {
+        "id_baju": "shoes10",
+        "image_path": "/clothes/shoes10.jpg",
+        "category": "footwear",
+        "sub_category": "lace-up leather dress shoes",
+        "color": "dark brown",
+        "material": "leather",
+        "fit": "regular fit",
+        "style": "classic business casual",
+        "pattern": "solid with perforated detailing",
+        "formality_level": "semi-formal",
+        "suitable_occasions": [
+            "office",
+            "business casual",
+            "smart casual",
+            "semi-formal events",
+            "dinner outings"
+        ]
+    },
+    {
+        "id_baju": "shoes11",
+        "image_path": "/clothes/shoes11.jpg",
+        "category": "Footwear",
+        "sub_category": "Running sneakers",
+        "color": "Red with white sole and black accents",
+        "material": "Synthetic mesh and leather-like overlays with rubber sole",
+        "fit": "Regular athletic lace-up fit",
+        "style": "Sporty, athletic, athleisure",
+        "pattern": "Solid with logo/color-block accents",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "running",
+            "gym workouts",
+            "walking",
+            "casual outings",
+            "sports activities",
+            "athleisure wear"
+        ]
+    },
+    {
+        "id_baju": "shoes2",
+        "image_path": "/clothes/shoes2.jpg",
+        "category": "Footwear",
+        "sub_category": "Trail running shoes",
+        "color": "Black, dark teal, gray, and coral red accents",
+        "material": "Breathable mesh textile upper, synthetic overlays, rubber outsole",
+        "fit": "Low-top lace-up athletic fit with cushioned sole",
+        "style": "Sporty outdoor performance / trail running",
+        "pattern": "Color-blocked with speckled splatter detailing",
+        "formality_level": "Casual / Athletic",
+        "suitable_occasions": [
+            "Trail running",
+            "Hiking",
+            "Outdoor workouts",
+            "Walking",
+            "Casual athleisure",
+            "Travel"
+        ]
+    },
+    {
+        "id_baju": "shoes3",
+        "image_path": "/clothes/shoes3.jpg",
+        "category": "footwear",
+        "sub_category": "lace-up dress shoes",
+        "color": "black",
+        "material": "leather",
+        "fit": "regular",
+        "style": "classic dress",
+        "pattern": "solid",
+        "formality_level": "formal",
+        "suitable_occasions": [
+            "business meetings",
+            "office wear",
+            "formal events",
+            "weddings",
+            "interviews",
+            "smart casual occasions"
+        ]
+    },
+    {
+        "id_baju": "shoes4",
+        "image_path": "/clothes/shoes4.jpg",
+        "category": "Footwear",
+        "sub_category": "Pointed-toe stiletto pumps",
+        "color": "Nude beige",
+        "material": "Smooth leather or synthetic leather",
+        "fit": "Regular slip-on fit",
+        "style": "Classic elegant minimalist",
+        "pattern": "Solid",
+        "formality_level": "Formal",
+        "suitable_occasions": [
+            "Formal events",
+            "Business meetings",
+            "Office wear",
+            "Weddings",
+            "Cocktail parties",
+            "Evening occasions"
+        ]
+    },
+    {
+        "id_baju": "shoes6",
+        "image_path": "/clothes/shoes6.jpeg",
+        "category": "Footwear",
+        "sub_category": "Sneakers / athletic shoes",
+        "color": "Navy blue, black, teal, and white",
+        "material": "Breathable mesh textile with synthetic overlays and rubber sole",
+        "fit": "Regular fit, low-top athletic design",
+        "style": "Sporty, casual, kids athletic sneaker",
+        "pattern": "Color-blocked with graphic/brand patches",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "sports activities",
+            "playground",
+            "school",
+            "casual outings",
+            "walking",
+            "everyday wear"
+        ]
+    },
+    {
+        "id_baju": "shoes7",
+        "image_path": "/clothes/shoes7.jpg",
+        "category": "Footwear",
+        "sub_category": "Heeled sandals",
+        "color": "Cognac brown / tan",
+        "material": "Leather or faux leather upper with stitched detailing; wooden or stacked block heel",
+        "fit": "Adjustable ankle-strap fit with open toe and open sides",
+        "style": "Classic ankle-strap block-heel sandal with vintage-inspired leather finish",
+        "pattern": "Solid",
+        "formality_level": "Smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "brunch",
+            "summer events",
+            "daytime gatherings",
+            "smart-casual office wear",
+            "vacation",
+            "semi-formal daytime occasions"
+        ]
+    },
+    {
+        "id_baju": "shoes8",
+        "image_path": "/clothes/shoes8.jpg",
+        "category": "Footwear",
+        "sub_category": "Heeled sandals",
+        "color": "Bright orange / tangerine",
+        "material": "Suede or suede-like synthetic upper with leather/synthetic lining",
+        "fit": "Adjustable ankle-strap fit",
+        "style": "Statement strappy block-heel sandal",
+        "pattern": "Solid",
+        "formality_level": "Semi-formal / dressy",
+        "suitable_occasions": [
+            "parties",
+            "date nights",
+            "cocktail events",
+            "summer events",
+            "weddings",
+            "evening outings"
+        ]
+    },
+    {
+        "id_baju": "shoes9",
+        "image_path": "/clothes/shoes9.jpg",
+        "category": "Footwear",
+        "sub_category": "Pointed-toe slingback block heels",
+        "color": "Ivory / off-white",
+        "material": "Smooth leather or satin-like synthetic upper",
+        "fit": "Standard fit with ankle strap",
+        "style": "Elegant bridal minimalist",
+        "pattern": "Solid",
+        "formality_level": "Formal",
+        "suitable_occasions": [
+            "wedding",
+            "bridal event",
+            "formal event",
+            "evening occasion",
+            "engagement party",
+            "reception"
+        ]
+    }
+]

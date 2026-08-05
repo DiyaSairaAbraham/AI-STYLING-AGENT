@@ -4,7 +4,7 @@ import shutil
 
 from agents.vision_agent import analyze_user_image
 from agents.stylist_agent import generate_style_recommendation
-from utils.wardrobe_manager import build_wardrobe_database
+from utils.wardrobe_manager import list_wardrobe
 from agents.shopping_agent import create_search_links
 router = APIRouter(
     prefix="/recommendation",
@@ -32,9 +32,10 @@ async def generate_options(user_image: UploadFile = File(...)):
         user_profile = analyze_user_image(image_path)
 
         # Module 2: Wardrobe Agent
-        wardrobe_data = build_wardrobe_database("wardrobe")
+       # Module 2: Load existing wardrobe database
+        wardrobe_data = list_wardrobe()
 
-        # Module 3: Stylist Agent only (NO image generation)
+         # Module 3: Stylist Agent only (NO image generation)
         recommendations = generate_style_recommendation(
             user_profile,
             wardrobe_data

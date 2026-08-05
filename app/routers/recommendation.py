@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 
 from agents.vision_agent import analyze_user_image
 from agents.stylist_agent import generate_style_recommendation
-from utils.wardrobe_manager import build_wardrobe_database
+from utils.wardrobe_manager import list_wardrobe
 from agents.shopping_agent import create_search_links
 
 
@@ -15,7 +15,6 @@ router = APIRouter(
     tags=["Recommendation Options"],
 )
 
-
 UPLOAD_DIR = "uploads"
 
 
@@ -23,7 +22,6 @@ UPLOAD_DIR = "uploads"
 async def generate_options(
     user_image: UploadFile = File(...)
 ):
-
     try:
 
         # Create upload directory
@@ -32,13 +30,11 @@ async def generate_options(
             exist_ok=True
         )
 
-
         # Save uploaded image
         image_path = os.path.join(
             UPLOAD_DIR,
             user_image.filename
         )
-
 
         with open(
             image_path,
@@ -50,11 +46,9 @@ async def generate_options(
                 buffer
             )
 
-
         print(
             "[INFO] Running fast recommendation flow"
         )
-
 
         # -----------------------------------
         # Module 1: Vision Agent
@@ -64,15 +58,11 @@ async def generate_options(
             image_path
         )
 
-
         # -----------------------------------
-        # Module 2: Wardrobe Agent
+        # Module 2: Load Wardrobe Database
         # -----------------------------------
 
-        wardrobe_data = build_wardrobe_database(
-            "wardrobe"
-        )
-
+        wardrobe_data = list_wardrobe()
 
         # -----------------------------------
         # Module 3: Stylist Agent
@@ -82,13 +72,13 @@ async def generate_options(
             user_profile,
             wardrobe_data
         )
-# -----------------------------------
-# Module 4: Shopping Agent
-# -----------------------------------
+
+        # -----------------------------------
+        # Module 4: Shopping Agent
+        # -----------------------------------
 
         for outfit in recommendations.recommendations:
             outfit.shopping_links = create_search_links(outfit)
-
 
         return {
 
@@ -105,14 +95,11 @@ async def generate_options(
 
         }
 
-
     except Exception as e:
-
 
         print(
             f"[ERROR] Recommendation failed: {str(e)}"
         )
-
 
         return JSONResponse(
 
