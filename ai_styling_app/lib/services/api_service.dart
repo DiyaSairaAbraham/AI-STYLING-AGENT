@@ -137,6 +137,7 @@ class ApiService {
       );
 
 
+      
 
       final streamedResponse =
           await request.send();
@@ -148,6 +149,7 @@ class ApiService {
             streamedResponse,
           );
 
+     
 
 
       developer.log(
@@ -187,10 +189,62 @@ class ApiService {
 
   }
 
+  //===================================================
+  // regenerateRecommendations
+  //===================================================
 
+  Future<Map<String, dynamic>?> regenerateRecommendations(
+  String userImagePath,
+  
+  ) async {
 
+    try {
 
+      final response = await http.post(
 
+        Uri.parse(
+          '$baseUrl/recommendation/regenerate',
+        ),
+
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+        body: jsonEncode({
+          "user_image_path": userImagePath,
+        }),
+
+      );
+
+      developer.log(
+        "Regenerate Status: ${response.statusCode}",
+      );
+
+      developer.log(
+        "Regenerate Body: ${response.body}",
+      );
+
+      if (response.statusCode == 200) {
+
+        return jsonDecode(
+          response.body,
+        );
+
+      }
+
+      return null;
+
+    } catch (e) {
+
+      developer.log(
+        "Regeneration failed: $e",
+      );
+
+      return null;
+
+    }
+
+  }  
 
 
   // ==========================================================

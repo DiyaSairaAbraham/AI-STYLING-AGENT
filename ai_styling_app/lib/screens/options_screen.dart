@@ -28,10 +28,19 @@ class _OptionsScreenState extends State<OptionsScreen> {
 
   final ApiService _apiService = ApiService();
 
+  late List recommendations;
 
   bool _loading = false;
 
+  String _loadingMessage = "";
 
+  @override
+  void initState() {
+    super.initState();
+
+    recommendations =
+      widget.optionsData["data"]["recommendations"];
+  }
 
   Future<void> _generateOutfit(
     Map<String, dynamic> outfit,
@@ -41,7 +50,7 @@ class _OptionsScreenState extends State<OptionsScreen> {
     setState(() {
 
       _loading = true;
-
+      _loadingMessage = "Creating your outfit image...";
     });
 
 
@@ -156,7 +165,46 @@ class _OptionsScreenState extends State<OptionsScreen> {
 
 
 
+  Future<void> _regenerateRecommendations() async {
 
+    setState(() {
+      _loading = true;
+      _loadingMessage = "Generating new outfit recommendations...";
+    });
+
+    final result =
+        await _apiService.regenerateRecommendations(
+      widget.optionsData["user_image_path"],
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _loading = false;
+    });
+
+    if (result != null) {
+
+      setState(() {
+        recommendations =
+            result["data"]["recommendations"];
+      });
+
+    } else {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+
+        const SnackBar(
+          content: Text(
+            "Failed to regenerate recommendations",
+          ),
+        ),
+
+      );
+
+    }
+
+  }
 
 
   @override
@@ -164,10 +212,7 @@ class _OptionsScreenState extends State<OptionsScreen> {
 
 
 
-    final recommendations =
-        widget.optionsData["data"]
-        ["recommendations"];
-
+    
 
 
     return Scaffold(
@@ -180,9 +225,19 @@ class _OptionsScreenState extends State<OptionsScreen> {
               "Choose Your Outfit",
             ),
 
+     
+
+        actions: [
+          IconButton(
+            tooltip: "Generate new outfit recommendations",
+            icon: const Icon(Icons.refresh),
+            onPressed: _loading
+              ? null
+              : _regenerateRecommendations,
+
+          ),
+        ],
       ),
-
-
 
 
       body: Stack(
@@ -483,7 +538,7 @@ class _OptionsScreenState extends State<OptionsScreen> {
 
 
               child:
-                  const Center(
+                   Center(
 
 
                 child:
@@ -515,11 +570,11 @@ class _OptionsScreenState extends State<OptionsScreen> {
                     Text(
 
 
-                      "Creating your outfit image...",
+                      _loadingMessage,
 
 
                       style:
-                          TextStyle(
+                          const TextStyle(
 
                         color:
                             Colors.white,

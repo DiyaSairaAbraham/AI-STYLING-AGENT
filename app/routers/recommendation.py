@@ -9,6 +9,10 @@ from agents.stylist_agent import generate_style_recommendation
 from utils.wardrobe_manager import list_wardrobe
 from agents.shopping_agent import create_search_links
 
+from pydantic import BaseModel
+
+class RegenerateRequest(BaseModel):
+    user_image_path: str
 
 router = APIRouter(
     prefix="/recommendation",
@@ -117,4 +121,44 @@ async def generate_options(
 
             }
 
+        )
+
+@router.post("/regenerate")
+async def regenerate_options(request: RegenerateRequest):
+    try:
+
+        print("[INFO] Regenerating recommendations")
+
+        user_profile = analyze_user_image(
+            request.user_image_path
+        )
+
+        wardrobe_data = list_wardrobe()
+
+        recommendations = generate_style_recommendation(
+            user_profile,
+            wardrobe_data
+        )
+
+        for outfit in recommendations.recommendations:
+            outfit.shopping_links = create_search_links(outfit)
+
+        return {
+            "status": "success",
+            "message": "New recommendations generated",
+            "user_image_path": request.user_image_path,
+            "data": recommendations
+        }
+
+    except Exception as e:
+
+        print(f"[ERROR] Regeneration failed: {str(e)}")
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "failed",
+                "message": "Unable to regenerate recommendations",
+                "error": str(e)
+            }
         )
