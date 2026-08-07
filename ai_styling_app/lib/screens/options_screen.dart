@@ -28,11 +28,17 @@ class _OptionsScreenState extends State<OptionsScreen> {
 
   final ApiService _apiService = ApiService();
 
+  _OptionsScreenState() {
+  print("ApiService instance: $_apiService");
+    }
+
   late List recommendations;
 
   bool _loading = false;
 
   String _loadingMessage = "";
+
+  final Set<int> _refreshingIndexes = {};
 
   @override
   void initState() {
@@ -206,6 +212,58 @@ class _OptionsScreenState extends State<OptionsScreen> {
 
   }
 
+  Future<void> _regenerateOneRecommendation(int index) async {
+
+    if (_refreshingIndexes.contains(index)) return;
+
+    setState(() {
+      _refreshingIndexes.add(index);
+        });
+
+    try {
+
+      final result =
+          await _apiService.regenerateOneRecommendation(
+
+        userImagePath:
+            widget.optionsData["user_image_path"],
+
+        category:
+            recommendations[index]["category"],
+
+      );
+
+      if (result != null &&
+          result["recommendation"] != null) {
+
+        setState(() {
+
+          recommendations[index] =
+              result["recommendation"];
+
+        });
+
+      }
+
+    } catch (e) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+
+        SnackBar(
+          content: Text("Failed to regenerate recommendation"),
+        ),
+
+      );
+
+    } finally {
+
+      setState(() {
+        _refreshingIndexes.remove(index);
+      });
+
+    }
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -216,28 +274,6 @@ class _OptionsScreenState extends State<OptionsScreen> {
 
 
     return Scaffold(
-
-
-      appBar: AppBar(
-
-        title:
-            const Text(
-              "Choose Your Outfit",
-            ),
-
-     
-
-        actions: [
-          IconButton(
-            tooltip: "Generate new outfit recommendations",
-            icon: const Icon(Icons.refresh),
-            onPressed: _loading
-              ? null
-              : _regenerateRecommendations,
-
-          ),
-        ],
-      ),
 
 
       body: Stack(
@@ -316,23 +352,124 @@ class _OptionsScreenState extends State<OptionsScreen> {
                     children: [
 
 
+                      Row(
 
-                      Text(
+                        mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
 
+                        children: [
 
-                        outfit["category"],
+                          Text(
 
+                            outfit["category"],
 
-                        style:
-                            const TextStyle(
+                            style: const TextStyle(
 
-                          fontSize:22,
+                              fontSize: 22,
 
-                          fontWeight:
-                              FontWeight.bold,
+                              fontWeight: FontWeight.bold,
 
-                        ),
+                            ),
 
+                          ),
+
+                          AnimatedSwitcher(
+
+                                      duration: const Duration(
+                                        milliseconds: 250,
+                                      ),
+
+                                      transitionBuilder: (
+                                        child,
+                                        animation,
+                                      ) {
+
+                                        return FadeTransition(
+
+                                          opacity: animation,
+
+                                          child: child,
+
+                                        );
+
+                                      },
+
+                                      child: _refreshingIndexes.contains(index)
+
+                                          ? Column(
+
+                                              key: const ValueKey("loading"),
+
+                                              mainAxisSize: MainAxisSize.min,
+
+                                              children: [
+
+                                                const SizedBox(
+
+                                                  width: 24,
+
+                                                  height: 24,
+
+                                                  child: CircularProgressIndicator(
+
+                                                    strokeWidth: 2,
+
+                                                  ),
+
+                                                ),
+
+                                                const SizedBox(
+                                                  height: 6,
+                                                ),
+
+                                                Text(
+
+                                                  "Generating new\n${recommendations[index]["category"]} outfit...",
+
+                                                  textAlign: TextAlign.center,
+
+                                                  style: const TextStyle(
+
+                                                    fontSize: 11,
+
+                                                    color: Colors.grey,
+
+                                                    fontStyle: FontStyle.italic,
+
+                                                  ),
+
+                                                ),
+
+                                              ],
+
+                                            )
+                                          : Tooltip(
+
+                                              key: const ValueKey("button"),
+
+                                              message:
+                                                  "Generate another ${recommendations[index]["category"]} outfit",
+
+                                              child: IconButton(
+
+                                                icon: const Icon(
+                                                  Icons.refresh,
+                                                ),
+
+                                                onPressed: () {
+
+                                                  _regenerateOneRecommendation(
+                                                    index,
+                                                  );
+
+                                                },
+
+                                              ),
+
+                                            ),
+
+                                    )
+                         ],
 
                       ),
 

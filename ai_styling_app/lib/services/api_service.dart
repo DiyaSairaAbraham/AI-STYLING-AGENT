@@ -562,6 +562,57 @@ class ApiService {
 
   }
 
+  Future<Map<String, dynamic>?> regenerateOneRecommendation({
+
+    required String userImagePath,
+
+    required String category,
+
+  }) async {
+
+    try {
+
+      final response = await http.post(
+
+        Uri.parse(
+          '$baseUrl/recommendation/regenerate-one',
+        ),
+
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+        body: jsonEncode({
+
+          "user_image_path": userImagePath,
+
+          "category": category,
+
+        }),
+
+      );
+
+      print("Status: ${response.statusCode}");
+      print("Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+
+        return jsonDecode(response.body);
+
+      }
+
+      return null;
+
+    } catch (e) {
+
+      print(e);
+
+      return null;
+
+    }
+
+  }
+
 
 
 }

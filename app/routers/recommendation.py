@@ -14,6 +14,10 @@ from pydantic import BaseModel
 class RegenerateRequest(BaseModel):
     user_image_path: str
 
+class RegenerateOneRequest(BaseModel):
+    user_image_path: str
+    category: str
+
 router = APIRouter(
     prefix="/recommendation",
     tags=["Recommendation Options"],
@@ -22,12 +26,15 @@ router = APIRouter(
 UPLOAD_DIR = "uploads"
 
 
+
 @router.post("/options")
 async def generate_options(
     user_image: UploadFile = File(...)
 ):
+    
     try:
-
+    
+    
         # Create upload directory
         os.makedirs(
             UPLOAD_DIR,
@@ -77,6 +84,8 @@ async def generate_options(
             wardrobe_data
         )
 
+       
+
         # -----------------------------------
         # Module 4: Shopping Agent
         # -----------------------------------
@@ -101,26 +110,18 @@ async def generate_options(
 
     except Exception as e:
 
-        print(
-            f"[ERROR] Recommendation failed: {str(e)}"
-        )
+        import traceback
+
+        traceback.print_exc()
+
+        print("ERROR:", e)
 
         return JSONResponse(
-
             status_code=500,
-
             content={
-
                 "status": "failed",
-
-                "message":
-                    "Unable to generate outfit options",
-
-                "error":
-                    str(e)
-
+                "message": str(e)
             }
-
         )
 
 @router.post("/regenerate")
@@ -135,10 +136,12 @@ async def regenerate_options(request: RegenerateRequest):
 
         wardrobe_data = list_wardrobe()
 
+        
         recommendations = generate_style_recommendation(
             user_profile,
             wardrobe_data
         )
+       
 
         for outfit in recommendations.recommendations:
             outfit.shopping_links = create_search_links(outfit)
@@ -162,3 +165,45 @@ async def regenerate_options(request: RegenerateRequest):
                 "error": str(e)
             }
         )
+@router.post("/regenerate-one")
+async def regenerate_one_option(
+    request: RegenerateOneRequest
+):
+    
+    print(">>> regenerate-one entered")
+
+    user_profile = analyze_user_image(
+    request.user_image_path
+     )
+
+    wardrobe_data = list_wardrobe()
+
+    recommendations = generate_style_recommendation(
+        user_profile,
+        wardrobe_data
+         )
+
+    selected = None
+
+    for outfit in recommendations.recommendations:
+
+        if outfit.category == request.category:
+
+            selected = outfit
+            break     
+    if selected is None:
+
+        return JSONResponse(
+        status_code=404,
+        content={
+            "status": "failed",
+            "message": "Category not found"
+        }
+    )
+
+    selected.shopping_links = create_search_links(selected)
+
+    return {
+        "status": "success",
+        "recommendation": selected
+    }
