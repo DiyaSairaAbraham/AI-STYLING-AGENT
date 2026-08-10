@@ -947,26 +947,6 @@
         ]
     },
     {
-        "id_baju": "shoes2",
-        "image_path": "/clothes/shoes2.jpg",
-        "category": "Footwear",
-        "sub_category": "Trail running shoes",
-        "color": "Black, dark teal, gray, and coral red accents",
-        "material": "Breathable mesh textile upper, synthetic overlays, rubber outsole",
-        "fit": "Low-top lace-up athletic fit with cushioned sole",
-        "style": "Sporty outdoor performance / trail running",
-        "pattern": "Color-blocked with speckled splatter detailing",
-        "formality_level": "Casual / Athletic",
-        "suitable_occasions": [
-            "Trail running",
-            "Hiking",
-            "Outdoor workouts",
-            "Walking",
-            "Casual athleisure",
-            "Travel"
-        ]
-    },
-    {
         "id_baju": "shoes3",
         "image_path": "/clothes/shoes3.jpg",
         "category": "footwear",
