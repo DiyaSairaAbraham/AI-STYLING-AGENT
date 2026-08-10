@@ -131,29 +131,27 @@ try {
 
   final imageUrl = result['image_url'];
 
-  if (imageUrl == null ||
-      imageUrl.toString().isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Image URL not received',
-        ),
-      ),
-    );
+print("GENERATED IMAGE URL: $imageUrl");
 
-    return;
-  }
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => OutfitResultScreen(
-        imageUrl: imageUrl.toString(),
-        recommendation:
-            Recommendation.fromJson(outfit),
-      ),
+if (imageUrl == null ||imageUrl.toString().trim().isEmpty)  {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Image URL not received'),
     ),
   );
+
+  return;
+}
+
+Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (_) => OutfitResultScreen(
+      imageUrl: imageUrl.toString(),
+      recommendation: Recommendation.fromJson(outfit),
+    ),
+  ),
+);
 } catch (e) {
   if (!mounted) {
     return;

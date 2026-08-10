@@ -1086,5 +1086,24 @@
             "casual wear",
             "streetwear"
         ]
+    },
+    {
+        "id_baju": "1000179430",
+        "image_path": "/clothes/1000179430.jpg",
+        "category": "Top",
+        "sub_category": "Crew neck t-shirt",
+        "color": "Green",
+        "material": "Cotton jersey knit",
+        "fit": "Regular fit",
+        "style": "Basic minimalist",
+        "pattern": "Solid",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "casual wear",
+            "everyday wear",
+            "lounging",
+            "sportswear",
+            "layering"
+        ]
     }
 ]
