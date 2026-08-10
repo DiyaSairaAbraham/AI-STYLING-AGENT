@@ -6,14 +6,9 @@ import 'package:image_picker/image_picker.dart';
 
 import '../utils/constants.dart';
 
-
 class ApiService {
-
-
-  /// Uses Web/Android URL automatically
+  /// Uses the platform-specific URL configured in AppConstants.
   static String get baseUrl => AppConstants.baseUrl;
-
-
 
   // ==========================================================
   // FULL PIPELINE
@@ -21,598 +16,355 @@ class ApiService {
   // ==========================================================
 
   Future<Map<String, dynamic>?> generateRecommendation(
-      XFile imageFile,
+    XFile imageFile,
   ) async {
-
     try {
-
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse(
-          '$baseUrl/recommendation/generate',
-        ),
+        Uri.parse('$baseUrl/recommendation/generate'),
       );
 
-
-      final bytes =
-          await imageFile.readAsBytes();
-
+      final bytes = await imageFile.readAsBytes();
 
       request.files.add(
-
         http.MultipartFile.fromBytes(
           'user_image',
           bytes,
           filename: imageFile.name,
         ),
-
       );
 
+      final streamedResponse = await request.send();
 
-      final streamedResponse =
-          await request.send();
-
-
-      final response =
-          await http.Response.fromStream(
-            streamedResponse,
-          );
-
+      final response = await http.Response.fromStream(
+        streamedResponse,
+      );
 
       developer.log(
-        "Generate Status: ${response.statusCode}",
+        'Generate Status: ${response.statusCode}',
       );
-
 
       developer.log(
-        "Generate Body: ${response.body}",
+        'Generate Body: ${response.body}',
       );
 
-
-      if(response.statusCode == 200){
-
-        return jsonDecode(
-          response.body,
-        );
-
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
       }
 
-
       return null;
-
-
-    } catch(e){
-
+    } catch (e, stackTrace) {
       developer.log(
-        "Generate failed: $e",
+        'Generate failed: $e',
+        error: e,
+        stackTrace: stackTrace,
       );
 
       return null;
-
     }
-
   }
-
-
-
-
 
   // ==========================================================
   // GENERATE OUTFIT OPTIONS
   // Vision + Wardrobe + Stylist
   // ==========================================================
 
-
-  Future<Map<String,dynamic>?> generateOptions(
-      XFile imageFile,
+  Future<Map<String, dynamic>?> generateOptions(
+    XFile imageFile,
   ) async {
-
-
     try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/recommendation/options'),
+      );
 
-
-      final request =
-          http.MultipartRequest(
-            'POST',
-            Uri.parse(
-              '$baseUrl/recommendation/options',
-            ),
-          );
-
-
-
-      final bytes =
-          await imageFile.readAsBytes();
-
-
+      final bytes = await imageFile.readAsBytes();
 
       request.files.add(
-
         http.MultipartFile.fromBytes(
           'user_image',
           bytes,
           filename: imageFile.name,
         ),
-
       );
 
+      final streamedResponse = await request.send();
 
-      
-
-      final streamedResponse =
-          await request.send();
-
-
-
-      final response =
-          await http.Response.fromStream(
-            streamedResponse,
-          );
-
-     
-
-
-      developer.log(
-        "Options Status: ${response.statusCode}",
-      );
-
-
-      developer.log(
-        "Options Body: ${response.body}",
-      );
-
-
-
-      if(response.statusCode == 200){
-
-        return jsonDecode(
-          response.body,
-        );
-
-      }
-
-
-      return null;
-
-
-    }catch(e){
-
-
-      developer.log(
-        "Options failed: $e",
-      );
-
-
-      return null;
-
-    }
-
-  }
-
-  //===================================================
-  // regenerateRecommendations
-  //===================================================
-
-  Future<Map<String, dynamic>?> regenerateRecommendations(
-  String userImagePath,
-  
-  ) async {
-
-    try {
-
-      final response = await http.post(
-
-        Uri.parse(
-          '$baseUrl/recommendation/regenerate',
-        ),
-
-        headers: {
-          'Content-Type': 'application/json',
-        },
-
-        body: jsonEncode({
-          "user_image_path": userImagePath,
-        }),
-
+      final response = await http.Response.fromStream(
+        streamedResponse,
       );
 
       developer.log(
-        "Regenerate Status: ${response.statusCode}",
+        'Options Status: ${response.statusCode}',
       );
 
       developer.log(
-        "Regenerate Body: ${response.body}",
+        'Options Body: ${response.body}',
       );
 
       if (response.statusCode == 200) {
-
-        return jsonDecode(
-          response.body,
-        );
-
+        return jsonDecode(response.body) as Map<String, dynamic>;
       }
 
       return null;
-
-    } catch (e) {
-
+    } catch (e, stackTrace) {
       developer.log(
-        "Regeneration failed: $e",
+        'Options failed: $e',
+        error: e,
+        stackTrace: stackTrace,
       );
 
       return null;
-
     }
+  }
 
-  }  
+  // ==========================================================
+  // REGENERATE ALL OUTFIT RECOMMENDATIONS
+  // ==========================================================
 
+  Future<Map<String, dynamic>?> regenerateRecommendations(
+    String userImagePath,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/recommendation/regenerate'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'user_image_path': userImagePath,
+        }),
+      );
+
+      developer.log(
+        'Regenerate Status: ${response.statusCode}',
+      );
+
+      developer.log(
+        'Regenerate Body: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+
+      return null;
+    } catch (e, stackTrace) {
+      developer.log(
+        'Regeneration failed: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
+      return null;
+    }
+  }
+
+  // ==========================================================
+  // REGENERATE ONE OUTFIT RECOMMENDATION
+  // ==========================================================
+
+  Future<Map<String, dynamic>?> regenerateOneRecommendation({
+    required String userImagePath,
+    required String category,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/recommendation/regenerate-one'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'user_image_path': userImagePath,
+          'category': category,
+        }),
+      );
+
+      developer.log(
+        'Regenerate One Status: ${response.statusCode}',
+      );
+
+      developer.log(
+        'Regenerate One Body: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+
+      return null;
+    } catch (e, stackTrace) {
+      developer.log(
+        'Regenerate one failed: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
+      return null;
+    }
+  }
 
   // ==========================================================
   // GENERATE SELECTED OUTFIT IMAGE
   // ==========================================================
 
-
-  Future<Map<String,dynamic>?> generateSelectedOutfit({
-
+  Future<Map<String, dynamic>?> generateSelectedOutfit({
     required String prompt,
-
     required String userImagePath,
-
   }) async {
-
-
-
     try {
-
-
-      final response =
-          await http.post(
-
-            Uri.parse(
-              '$baseUrl/recommendation/generate-image',
-            ),
-
-
-            headers: {
-
-              'Content-Type':
-                  'application/json',
-
-            },
-
-
-            body: jsonEncode({
-
-              "prompt": prompt,
-
-              "user_image_path":
-                  userImagePath,
-
-            }),
-
-          );
-
-
-
-
-      developer.log(
-        "Image Status: ${response.statusCode}",
+      final response = await http.post(
+        Uri.parse('$baseUrl/recommendation/generate-image'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'prompt': prompt,
+          'user_image_path': userImagePath,
+        }),
       );
 
-
-
       developer.log(
-        "Image Body: ${response.body}",
+        'Image Status: ${response.statusCode}',
       );
 
+      developer.log(
+        'Image Body: ${response.body}',
+      );
 
-
-      if(response.statusCode == 200){
-
-        return jsonDecode(
-          response.body,
-        );
-
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
       }
 
-
       return null;
-
-
-
-    }catch(e){
-
-
+    } catch (e, stackTrace) {
       developer.log(
-        "Image generation failed: $e",
+        'Image generation failed: $e',
+        error: e,
+        stackTrace: stackTrace,
       );
 
-
       return null;
-
     }
-
   }
-
-
-
-
-
 
   // ==========================================================
   // WARDROBE
   // Get all wardrobe items
   // ==========================================================
 
-
-  Future<Map<String,dynamic>?> getWardrobe() async {
-
-
+  Future<Map<String, dynamic>?> getWardrobe() async {
     try {
-
-
-      final response =
-          await http.get(
-
-            Uri.parse(
-              '$baseUrl/wardrobe/',
-            ),
-
-          );
-
-
-
-      developer.log(
-        "Wardrobe Status: ${response.statusCode}",
+      final response = await http.get(
+        Uri.parse('$baseUrl/wardrobe/'),
       );
 
-
       developer.log(
-        "Wardrobe Body: ${response.body}",
+        'Wardrobe Status: ${response.statusCode}',
       );
 
+      developer.log(
+        'Wardrobe Body: ${response.body}',
+      );
 
-
-      if(response.statusCode == 200){
-
-        return jsonDecode(
-          response.body,
-        );
-
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
       }
 
-
       return null;
-
-
-
-    }catch(e){
-
-
+    } catch (e, stackTrace) {
       developer.log(
-        "Get wardrobe failed: $e",
+        'Get wardrobe failed: $e',
+        error: e,
+        stackTrace: stackTrace,
       );
 
-
       return null;
-
     }
-
   }
-
-
-
-
-
-
 
   // ==========================================================
   // ADD CLOTHING ITEM
   // ==========================================================
 
-
-  Future<Map<String,dynamic>?> addWardrobeItem(
-      XFile imageFile,
+  Future<Map<String, dynamic>?> addWardrobeItem(
+    XFile imageFile,
   ) async {
-
-
-
     try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/wardrobe/add'),
+      );
 
-
-      final request =
-          http.MultipartRequest(
-
-            "POST",
-
-            Uri.parse(
-              '$baseUrl/wardrobe/add',
-            ),
-
-          );
-
-
-
-      final bytes =
-          await imageFile.readAsBytes();
-
-
-
+      final bytes = await imageFile.readAsBytes();
 
       request.files.add(
-
         http.MultipartFile.fromBytes(
-
-          "file",
-
+          'file',
           bytes,
-
-          filename:
-              imageFile.name,
-
+          filename: imageFile.name,
         ),
-
       );
 
+      final streamedResponse = await request.send();
 
-
-
-      final streamedResponse =
-          await request.send();
-
-
-
-      final response =
-          await http.Response.fromStream(
-            streamedResponse,
-          );
-
-
+      final response = await http.Response.fromStream(
+        streamedResponse,
+      );
 
       developer.log(
-        "Add wardrobe response: ${response.body}",
+        'Add wardrobe status: ${response.statusCode}',
       );
 
+      developer.log(
+        'Add wardrobe response: ${response.body}',
+      );
 
-
-      if(response.statusCode == 200){
-
-        return jsonDecode(
-          response.body,
-        );
-
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
       }
 
-
       return null;
-
-
-
-    }catch(e){
-
-
+    } catch (e, stackTrace) {
       developer.log(
-        "Add wardrobe failed: $e",
+        'Add wardrobe failed: $e',
+        error: e,
+        stackTrace: stackTrace,
       );
 
-
       return null;
-
-
     }
-
-
   }
-
-
-
-
-
-
-
 
   // ==========================================================
   // DELETE CLOTHING ITEM
   // ==========================================================
 
-
   Future<bool> deleteWardrobeItem(
-      String itemId,
+    String itemId,
   ) async {
-
-
-
     try {
-
-
-      final response =
-          await http.delete(
-
-            Uri.parse(
-              '$baseUrl/wardrobe/$itemId',
-            ),
-
-          );
-
-
-
-      developer.log(
-        "Delete response: ${response.body}",
+      final response = await http.delete(
+        Uri.parse('$baseUrl/wardrobe/$itemId'),
       );
 
+      developer.log(
+        'Delete status: ${response.statusCode}',
+      );
 
+      developer.log(
+        'Delete response: ${response.body}',
+      );
 
       return response.statusCode == 200;
-
-
-
-    }catch(e){
-
-
+    } catch (e, stackTrace) {
       developer.log(
-        "Delete wardrobe failed: $e",
+        'Delete wardrobe failed: $e',
+        error: e,
+        stackTrace: stackTrace,
       );
-
 
       return false;
-
-
     }
-
-
   }
-
-  Future<Map<String, dynamic>?> regenerateOneRecommendation({
-
-    required String userImagePath,
-
-    required String category,
-
-  }) async {
-
-    try {
-
-      final response = await http.post(
-
-        Uri.parse(
-          '$baseUrl/recommendation/regenerate-one',
-        ),
-
-        headers: {
-          'Content-Type': 'application/json',
-        },
-
-        body: jsonEncode({
-
-          "user_image_path": userImagePath,
-
-          "category": category,
-
-        }),
-
-      );
-
-      print("Status: ${response.statusCode}");
-      print("Body: ${response.body}");
-
-      if (response.statusCode == 200) {
-
-        return jsonDecode(response.body);
-
-      }
-
-      return null;
-
-    } catch (e) {
-
-      print(e);
-
-      return null;
-
-    }
-
-  }
-
-
-
 }
