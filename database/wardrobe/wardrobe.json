@@ -1086,5 +1086,25 @@
             "engagement party",
             "reception"
         ]
+    },
+    {
+        "id_baju": "cap",
+        "image_path": "/clothes/cap.jpg",
+        "category": "accessories",
+        "sub_category": "baseball cap",
+        "color": "black with white accents",
+        "material": "performance polyester / synthetic fabric with perforated side panels",
+        "fit": "structured, curved-brim fit",
+        "style": "sporty, athletic",
+        "pattern": "solid with logo detail",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "sports",
+            "running",
+            "gym",
+            "outdoor activities",
+            "casual wear",
+            "streetwear"
+        ]
     }
 ]

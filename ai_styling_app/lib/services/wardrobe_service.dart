@@ -44,10 +44,13 @@ class WardrobeService {
       Uri.parse("$baseUrl/wardrobe/add"),
     );
 
+    final bytes = await image.readAsBytes();
+
     request.files.add(
-      await http.MultipartFile.fromPath(
+      http.MultipartFile.fromBytes(
         "file",
-        image.path,
+        bytes,
+        filename: image.name,
       ),
     );
 

@@ -74,10 +74,12 @@ async def add_item(
 
     try:
 
+        
         allowed_types = [
             "image/jpeg",
             "image/png",
-            "image/webp"
+            "image/webp",
+            "application/octet-stream"
         ]
 
         if file.content_type not in allowed_types:
