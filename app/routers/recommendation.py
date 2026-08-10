@@ -1,5 +1,6 @@
 import os
 import shutil
+from typing import Any
 
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -32,7 +33,7 @@ UPLOAD_DIR = "uploads"
 @router.post("/options", response_model=None)
 async def generate_options(
     user_image: UploadFile = File(...),
-):
+) -> Any:
     try:
         os.makedirs(
             UPLOAD_DIR,
@@ -46,6 +47,7 @@ async def generate_options(
             filename,
         )
 
+        # Save uploaded image.
         with open(image_path, "wb") as buffer:
             shutil.copyfileobj(
                 user_image.file,
@@ -54,21 +56,21 @@ async def generate_options(
 
         print("[INFO] Running fast recommendation flow")
 
-        # Module 1: Vision Agent
+        # Module 1: Vision Agent.
         user_profile = analyze_user_image(
             image_path,
         )
 
-        # Module 2: Load wardrobe database
+        # Module 2: Load wardrobe database.
         wardrobe_data = list_wardrobe()
 
-        # Module 3: Stylist Agent
+        # Module 3: Stylist Agent.
         recommendations = generate_style_recommendation(
             user_profile,
             wardrobe_data,
         )
 
-        # Module 4: Shopping Agent
+        # Module 4: Shopping Agent.
         for outfit in recommendations.recommendations:
             outfit.shopping_links = create_search_links(
                 outfit,
@@ -78,12 +80,12 @@ async def generate_options(
             "status": "success",
             "message": "Outfit options generated",
             "user_image_path": image_path,
-            "data": recommendations.model_dump(),
+            "data": recommendations,
         }
 
     except Exception as e:
         print(
-            f"[ERROR] Recommendation failed: {e}",
+            f"[ERROR] Recommendation failed: {str(e)}",
         )
 
         return JSONResponse(
@@ -99,7 +101,7 @@ async def generate_options(
 @router.post("/regenerate", response_model=None)
 async def regenerate_options(
     request: RegenerateRequest,
-):
+) -> Any:
     try:
         print("[INFO] Regenerating recommendations")
 
@@ -123,12 +125,12 @@ async def regenerate_options(
             "status": "success",
             "message": "New recommendations generated",
             "user_image_path": request.user_image_path,
-            "data": recommendations.model_dump(),
+            "data": recommendations,
         }
 
     except Exception as e:
         print(
-            f"[ERROR] Regeneration failed: {e}",
+            f"[ERROR] Regeneration failed: {str(e)}",
         )
 
         return JSONResponse(
@@ -144,7 +146,7 @@ async def regenerate_options(
 @router.post("/regenerate-one", response_model=None)
 async def regenerate_one_option(
     request: RegenerateOneRequest,
-):
+) -> Any:
     try:
         print(
             f"[INFO] Regenerating category: {request.category}",
@@ -156,28 +158,37 @@ async def regenerate_one_option(
 
         wardrobe_data = list_wardrobe()
 
-        recommendations = generate_style_recommendation(
+        # Generate only the requested category.
+        recommendation = generate_style_recommendation(
             user_profile,
             wardrobe_data,
+            category=request.category,
         )
 
-        selected = None
+        print(
+            f">>> Stylist returned "
+            f"{len(recommendation.recommendations)} "
+            f"recommendation(s)"
+        )
 
-        for outfit in recommendations.recommendations:
-            if outfit.category == request.category:
-                selected = outfit
-                break
+        print(
+            f">>> Generated categories: "
+            f"{[
+                outfit.category
+                for outfit in recommendation.recommendations
+            ]}"
+        )
 
-        if selected is None:
+        if not recommendation.recommendations:
             return JSONResponse(
-                status_code=404,
+                status_code=500,
                 content={
                     "status": "failed",
-                    "message": (
-                        f"Category '{request.category}' not found"
-                    ),
+                    "message": "No outfit recommendation generated",
                 },
             )
+
+        selected = recommendation.recommendations[0]
 
         selected.shopping_links = create_search_links(
             selected,
@@ -188,20 +199,22 @@ async def regenerate_one_option(
             "message": (
                 f"{request.category} recommendation regenerated"
             ),
-            "recommendation": selected.model_dump(),
+            "recommendation": selected,
         }
 
     except Exception as e:
         print(
             "[ERROR] Single recommendation regeneration failed: "
-            f"{e}",
+            f"{str(e)}"
         )
 
         return JSONResponse(
             status_code=500,
             content={
                 "status": "failed",
-                "message": "Unable to regenerate recommendation",
+                "message": (
+                    "Unable to regenerate recommendation"
+                ),
                 "error": str(e),
             },
         )

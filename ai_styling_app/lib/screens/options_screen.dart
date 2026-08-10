@@ -131,7 +131,7 @@ try {
 
   final imageUrl = result['image_url'];
 
-print("GENERATED IMAGE URL: $imageUrl");
+debugPrint("GENERATED IMAGE URL: $imageUrl");
 
 if (imageUrl == null ||imageUrl.toString().trim().isEmpty)  {
   ScaffoldMessenger.of(context).showSnackBar(
