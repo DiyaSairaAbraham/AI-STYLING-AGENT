@@ -15,19 +15,19 @@ client = OpenAI(
 
 
 def generate_style_recommendation(
-        module1_data,
-        wardrobe_items: list
+    module1_data,
+    wardrobe_items: list,
+    category=None
 ):
-
 
     log(
         "Running Stylist Agent (Module 3)"
     )
-    variation_seed = random.randint(
-    1000,
-    9999
-    )
 
+    variation_seed = random.randint(
+        1000,
+        9999
+    )
 
     if hasattr(
         module1_data,
@@ -37,12 +37,10 @@ def generate_style_recommendation(
         module1_data = module1_data.model_dump()
 
 
-
     wardrobe_data = []
 
 
     for item in wardrobe_items:
-
 
         if hasattr(
             item,
@@ -59,7 +57,33 @@ def generate_style_recommendation(
                 item
             )
 
+
     random.shuffle(wardrobe_data)
+
+
+    if category is None:
+
+        category_instruction = """
+Create EXACTLY 3 outfit recommendations.
+
+Categories:
+
+1. Business Formal
+2. Smart Casual
+3. Weekend Casual
+"""
+
+    else:
+
+        category_instruction = f"""
+Create EXACTLY ONE outfit recommendation.
+
+Category:
+
+{category}
+
+Do NOT generate any other categories.
+"""
 
 
     context_prompt = f"""
@@ -71,12 +95,9 @@ You will be given:
 1. User body + outfit analysis from Module 1.
 2. Complete wardrobe database from Module 2.
 
-
 TASK:
 
-TASK:
-
-Create EXACTLY 3 outfit recommendations.
+{category_instruction}
 
 Each recommendation request should generate different combinations whenever the wardrobe allows.
 
@@ -87,10 +108,9 @@ If multiple suitable items exist, intentionally vary your selections.
 Prioritize diversity over consistency while still maintaining good fashion sense.
 
 Variation ID:
+
 This request must produce outfit combinations that are
 different from previous requests whenever possible.
-
-Variation ID:
 
 Treat this variation ID as a unique styling session.
 
@@ -107,16 +127,6 @@ Never always choose the first matching wardrobe item.
 Use this variation ID to explore different outfit combinations.
 
 
-Categories:
-
-1. Business Formal
-
-2. Smart Casual
-
-3. Weekend Casual
-
-
-
 For each outfit provide:
 
 - Category
@@ -124,9 +134,7 @@ For each outfit provide:
 - Styling advice
 - Image generation prompt
 
-
 Rules:
-
 
 - Only use wardrobe database items.
 - Do not invent clothes.
@@ -145,17 +153,14 @@ IMAGE REQUIREMENTS:
 - Centered standing pose.
 - No cropping.
 
-
 User Analysis:
 
 {json.dumps(module1_data, indent=2)}
 
 
-
 Wardrobe Database:
 
 {json.dumps(wardrobe_data, indent=2)}
-
 
 
 Return ONLY structured output.
@@ -164,24 +169,21 @@ Return ONLY structured output.
 
     try:
 
-
         completion = client.beta.chat.completions.parse(
 
             model=STYLIST_MODEL,
-            
 
             messages=[
 
                 {
-                    "role":"user",
-                    "content":context_prompt
+                    "role": "user",
+                    "content": context_prompt
                 }
 
             ],
 
             response_format=Module3Output
         )
-
 
 
         result = (
@@ -193,16 +195,14 @@ Return ONLY structured output.
 
 
         log(
-            "Three outfit recommendations completed"
+            "Stylist recommendation completed"
         )
 
 
         return result
 
 
-
     except Exception as e:
-
 
         log(
             f"Stylist agent failed: {str(e)}"

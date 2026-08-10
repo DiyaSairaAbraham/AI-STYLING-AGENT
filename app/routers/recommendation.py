@@ -11,7 +11,12 @@ from agents.stylist_agent import generate_style_recommendation
 from agents.vision_agent import analyze_user_image
 from utils.wardrobe_manager import list_wardrobe
 
+<<<<<<< ours
 
+=======
+from pydantic import BaseModel
+print(">>> LOADED NEW recommendation.py - 3 TO 1 VERSION")
+>>>>>>> theirs
 class RegenerateRequest(BaseModel):
     user_image_path: str
 
@@ -140,7 +145,21 @@ async def regenerate_options(
                 "error": str(e),
             },
         )
+<<<<<<< ours
 
+=======
+
+@router.post("/regenerate-one")
+async def regenerate_one_option(
+    request: RegenerateOneRequest
+):
+
+    print(">>> regenerate-one entered")
+
+    user_profile = analyze_user_image(
+        request.user_image_path
+    )
+>>>>>>> theirs
 
 @router.post("/regenerate-one", response_model=None)
 async def regenerate_one_option(
@@ -151,6 +170,7 @@ async def regenerate_one_option(
             f"[INFO] Regenerating category: {request.category}",
         )
 
+<<<<<<< ours
         user_profile = analyze_user_image(
             request.user_image_path,
         )
@@ -198,6 +218,38 @@ async def regenerate_one_option(
             "[ERROR] Single recommendation regeneration failed: "
             f"{str(e)}",
         )
+=======
+    recommendation = generate_style_recommendation(
+        user_profile,
+        wardrobe_data,
+        category=request.category
+    )
+
+    print(
+        f">>> Stylist returned {len(recommendation.recommendations)} recommendation(s)"
+    )
+
+    print(
+        f">>> Generated categories: "
+        f"{[outfit.category for outfit in recommendation.recommendations]}"
+    )
+
+    if not recommendation.recommendations:
+
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "failed",
+                "message": "No outfit recommendation generated"
+            }
+        )
+
+    selected = recommendation.recommendations[0]
+
+    selected.shopping_links = create_search_links(
+        selected
+    )
+>>>>>>> theirs
 
         return JSONResponse(
             status_code=500,
