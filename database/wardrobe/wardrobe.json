@@ -1068,42 +1068,23 @@
         ]
     },
     {
-        "id_baju": "cap",
-        "image_path": "/clothes/cap.jpg",
-        "category": "accessories",
-        "sub_category": "baseball cap",
-        "color": "black with white accents",
-        "material": "performance polyester / synthetic fabric with perforated side panels",
-        "fit": "structured, curved-brim fit",
-        "style": "sporty, athletic",
-        "pattern": "solid with logo detail",
-        "formality_level": "casual",
-        "suitable_occasions": [
-            "sports",
-            "running",
-            "gym",
-            "outdoor activities",
-            "casual wear",
-            "streetwear"
-        ]
-    },
-    {
-        "id_baju": "1000179430",
-        "image_path": "/clothes/1000179430.jpg",
-        "category": "Top",
-        "sub_category": "Crew neck t-shirt",
-        "color": "Green",
-        "material": "Cotton jersey knit",
-        "fit": "Regular fit",
-        "style": "Basic minimalist",
+        "id_baju": "1000179451",
+        "image_path": "/clothes/1000179451.jpg",
+        "category": "Accessories",
+        "sub_category": "Baseball cap",
+        "color": "Black",
+        "material": "Cotton twill",
+        "fit": "Adjustable / structured",
+        "style": "Sporty minimalist",
         "pattern": "Solid",
         "formality_level": "Casual",
         "suitable_occasions": [
-            "casual wear",
-            "everyday wear",
-            "lounging",
-            "sportswear",
-            "layering"
+            "Casual outings",
+            "Streetwear",
+            "Sports",
+            "Outdoor activities",
+            "Travel",
+            "Everyday wear"
         ]
     }
 ]

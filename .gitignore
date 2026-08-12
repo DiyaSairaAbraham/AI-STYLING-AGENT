@@ -51,4 +51,6 @@ outputs/json/*
 
 # OS files
 .DS_Store
-Thumbs.db
+Thumbs.dbai_styling_app/lib/utils/constants.dart
+
+ai_styling_app/lib/utils/constants.dart
