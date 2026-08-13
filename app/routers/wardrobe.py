@@ -1,231 +1,259 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
 import os
 import shutil
 
+from fastapi import (
+    APIRouter,
+    File,
+    HTTPException,
+    UploadFile,
+)
+
 from utils.wardrobe_manager import (
-    build_wardrobe_database,
     add_wardrobe_item,
+    build_wardrobe_database,
+    list_wardrobe,
     remove_wardrobe_item,
-    list_wardrobe
 )
 
 
 router = APIRouter(
     prefix="/wardrobe",
-    tags=["Wardrobe"]
+    tags=["Wardrobe"],
 )
 
 
 UPLOAD_DIR = "uploads"
 
 
-# =========================
-# Build wardrobe database
-# =========================
+def _validate_source(
+    source: str,
+) -> str:
 
-@router.post("/build")
-def build_wardrobe():
+    normalized = (
+        source.strip().lower()
+    )
+
+    if normalized in {
+        "personal",
+        "wardrobe_1",
+        "1",
+    }:
+        return "personal"
+
+    if normalized in {
+        "commercial",
+        "wardrobe_2",
+        "2",
+    }:
+        return "commercial"
+
+    raise HTTPException(
+        status_code=400,
+        detail=(
+            "source must be "
+            "'personal' or 'commercial'."
+        ),
+    )
+
+
+# ============================================================
+# BUILD
+# ============================================================
+
+
+@router.post(
+    "/build/{source}",
+)
+def build_wardrobe(
+    source: str,
+):
+
+    source = _validate_source(
+        source
+    )
 
     try:
-
-        result = build_wardrobe_database(
-            folder_path="wardrobe"
+        result = (
+            build_wardrobe_database(
+                source
+            )
         )
 
         return {
-
             "status": "success",
-
-            "message":
-            "Wardrobe database created",
-
-            "count":
-            len(result),
-
-            "items":
-            result
-
+            "source": source,
+            "message": (
+                "Wardrobe database created."
+            ),
+            "count": len(result),
+            "items": result,
         }
 
-    except Exception as e:
-
-        print(
-            f"[ERROR] Wardrobe build failed: {str(e)}"
-        )
-
+    except Exception as exc:
         raise HTTPException(
             status_code=500,
             detail={
                 "status": "failed",
-                "message": "Unable to build wardrobe database",
-                "error": str(e)
-            }
-        )
+                "message": (
+                    "Unable to build wardrobe."
+                ),
+                "error": str(exc),
+            },
+        ) from exc
 
 
-# =========================
-# Add wardrobe item
-# =========================
+# ============================================================
+# LIST
+# ============================================================
 
-@router.post("/add")
-async def add_item(
-    file: UploadFile = File(...)
+
+@router.get(
+    "/{source}",
+)
+def get_wardrobe(
+    source: str,
 ):
 
+    source = _validate_source(
+        source
+    )
+
     try:
-
-        
-        allowed_types = [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "application/octet-stream"
-        ]
-
-        if file.content_type not in allowed_types:
-
-            raise HTTPException(
-                status_code=400,
-                detail="Only JPG, PNG and WEBP images are allowed"
-            )
-
-
-        os.makedirs(
-            UPLOAD_DIR,
-            exist_ok=True
+        wardrobe = list_wardrobe(
+            source
         )
 
+        return {
+            "status": "success",
+            "source": source,
+            "count": len(wardrobe),
+            "items": wardrobe,
+        }
 
-        image_path = os.path.join(
-            UPLOAD_DIR,
-            file.filename
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=str(exc),
+        ) from exc
+
+
+# ============================================================
+# ADD
+# ============================================================
+
+
+@router.post(
+    "/add/{source}",
+)
+async def add_item(
+    source: str,
+    file: UploadFile = File(...),
+):
+
+    source = _validate_source(
+        source
+    )
+
+    allowed_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "application/octet-stream",
+    }
+
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Only JPG, PNG and WEBP "
+                "images are allowed."
+            ),
         )
 
+    os.makedirs(
+        UPLOAD_DIR,
+        exist_ok=True,
+    )
 
+    filename = (
+        file.filename
+        or "wardrobe_item.jpg"
+    )
+
+    image_path = os.path.join(
+        UPLOAD_DIR,
+        filename,
+    )
+
+    try:
         with open(
             image_path,
-            "wb"
+            "wb",
         ) as buffer:
-
             shutil.copyfileobj(
                 file.file,
-                buffer
+                buffer,
             )
 
-
-        wardrobe = add_wardrobe_item(
-            image_path
+        wardrobe = (
+            add_wardrobe_item(
+                image_path,
+                source,
+            )
         )
-
 
         return {
-
             "status": "success",
-
-            "message":
-            "Wardrobe item added",
-
-            "wardrobe":
-            wardrobe
-
+            "source": source,
+            "message": (
+                "Wardrobe item added."
+            ),
+            "wardrobe": wardrobe,
         }
 
-    except HTTPException:
-        raise
-
-    except Exception as e:
-
-        print(
-            f"[ERROR] Add wardrobe item failed: {str(e)}"
-        )
-
+    except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail={
-                "status": "failed",
-                "message": "Unable to add wardrobe item",
-                "error": str(e)
-            }
-        )
+            detail=str(exc),
+        ) from exc
 
 
-# =========================
-# List wardrobe
-# =========================
-
-@router.get("")
-def get_wardrobe():
-
-    try:
-
-        wardrobe = list_wardrobe()
-
-        return {
-
-            "status": "success",
-
-            "count":
-            len(wardrobe),
-
-            "items":
-            wardrobe
-
-        }
-
-    except Exception as e:
-
-        print(
-            f"[ERROR] Unable to load wardrobe: {str(e)}"
-        )
-
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "status": "failed",
-                "message": "Unable to load wardrobe",
-                "error": str(e)
-            }
-        )
+# ============================================================
+# DELETE
+# ============================================================
 
 
-# =========================
-# Remove wardrobe item
-# =========================
-
-@router.delete("/{item_id}")
+@router.delete(
+    "/{source}/{item_id}",
+)
 def delete_item(
-    item_id: str
+    source: str,
+    item_id: str,
 ):
 
-    try:
+    source = _validate_source(
+        source
+    )
 
-        wardrobe = remove_wardrobe_item(
-            item_id
+    try:
+        wardrobe = (
+            remove_wardrobe_item(
+                item_id,
+                source,
+            )
         )
 
         return {
-
             "status": "success",
-
-            "message":
-            "Wardrobe item removed",
-
-            "items":
-            wardrobe
-
+            "source": source,
+            "message": (
+                "Wardrobe item removed."
+            ),
+            "items": wardrobe,
         }
 
-    except Exception as e:
-
-        print(
-            f"[ERROR] Remove wardrobe item failed: {str(e)}"
-        )
-
+    except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail={
-                "status": "failed",
-                "message": "Unable to remove wardrobe item",
-                "error": str(e)
-            }
-        )
+            detail=str(exc),
+        ) from exc

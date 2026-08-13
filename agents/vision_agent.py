@@ -7,7 +7,7 @@ from utils.logger import log
 
 
 client = OpenAI(
-    api_key=OPENAI_API_KEY,
+    api_key=OPENAI_API_KEY
 )
 
 
@@ -17,6 +17,7 @@ You are a professional fashion stylist and visual analyst.
 Analyze the user's full-body image carefully.
 
 Your task is ONLY to analyze the user and their current appearance.
+
 Do NOT design a new outfit.
 
 ==================================================
@@ -54,7 +55,8 @@ For visible clothing, describe where reasonably observable:
 - fit
 - overall style
 
-If something cannot be determined reliably, describe it conservatively.
+If something cannot be determined reliably,
+describe it conservatively.
 
 ==================================================
 3. STYLE ANALYSIS
@@ -62,14 +64,15 @@ If something cannot be determined reliably, describe it conservatively.
 
 Provide EXACTLY:
 
-2 ADVANTAGES:
+2 ADVANTAGES
 
-These are aspects of the user's current appearance or styling that are
-already working well.
+These are aspects of the user's current appearance
+or styling that are already working well.
 
-2 AREAS FOR IMPROVEMENT:
+2 AREAS FOR IMPROVEMENT
 
-These are specific aspects that could be improved through:
+These are specific aspects that could be improved
+through:
 
 - clothing
 - color
@@ -80,14 +83,16 @@ These are specific aspects that could be improved through:
 - hairstyle
 - overall styling
 
-The advantages and improvement areas must be useful to the Stylist Agent
-when designing completely new Business Formal and Smart Casual outfits.
+The observations must be useful to both:
+
+1. Function 1 AI Styling
+2. Function 2 Wardrobe Styling
 
 IMPORTANT:
 
 - Do not recommend outfits.
 - Do not use a wardrobe database.
-- Do not restrict future recommendations to the current clothes.
+- Do not restrict future recommendations to current clothes.
 - Be specific.
 - Base observations only on the image.
 - Return structured output only.
@@ -98,7 +103,8 @@ def analyze_user_image(
     image_path: str,
 ) -> Module1Output:
     """
-    Analyze the user's image and return structured fashion information.
+    Analyze the user's image and return structured
+    fashion information.
     """
 
     log(
@@ -130,12 +136,17 @@ def analyze_user_image(
                             },
                         },
                     ],
-                },
+                }
             ],
             response_format=Module1Output,
         )
 
-        result = response.choices[0].message.parsed
+        result = (
+            response
+            .choices[0]
+            .message
+            .parsed
+        )
 
         if result is None:
             raise ValueError(

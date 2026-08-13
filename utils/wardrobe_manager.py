@@ -1,382 +1,389 @@
 import os
 import shutil
 
-from config import WARDROBE_FILE
-
 from utils.json_utils import (
     load_json,
-    save_json
+    save_json,
 )
 
 from agents.wardrobe_agent import (
     analyze_wardrobe_folder,
-    analyze_wardrobe_item
+    analyze_wardrobe_item,
 )
 
 
-# Folder that stores wardrobe images
-WARDROBE_IMAGE_FOLDER = "wardrobe"
+PERSONAL_WARDROBE_FOLDER = "wardrobe"
+COMMERCIAL_WARDROBE_FOLDER = "wardrobe_2"
+
+PERSONAL_WARDROBE_FILE = (
+    "outputs/json/personal_wardrobe.json"
+)
+
+COMMERCIAL_WARDROBE_FILE = (
+    "outputs/json/commercial_wardrobe.json"
+)
 
 
-# ==========================================================
-# Build wardrobe database
-# ==========================================================
+def _get_wardrobe_paths(
+    source: str,
+) -> tuple[str, str]:
+    normalized = source.lower().strip()
 
-def build_wardrobe_database(folder_path: str):
+    if normalized in {
+        "personal",
+        "wardrobe_1",
+        "1",
+    }:
+        return (
+            PERSONAL_WARDROBE_FOLDER,
+            PERSONAL_WARDROBE_FILE,
+        )
+
+    if normalized in {
+        "commercial",
+        "wardrobe_2",
+        "2",
+    }:
+        return (
+            COMMERCIAL_WARDROBE_FOLDER,
+            COMMERCIAL_WARDROBE_FILE,
+        )
+
+    raise ValueError(
+        "Wardrobe source must be "
+        "'personal' or 'commercial'."
+    )
+
+
+def build_wardrobe_database(
+    source: str,
+) -> list[dict]:
     """
-    Scan wardrobe folder and rebuild wardrobe.json.
+    Build the selected wardrobe database.
 
-    Saves after every successful item so that
-    API failures do not destroy progress.
+    personal:
+        wardrobe_1/
+
+    commercial:
+        wardrobe_2/
     """
 
-    print("[INFO] Scanning wardrobe folder...")
+    folder_path, wardrobe_file = (
+        _get_wardrobe_paths(source)
+    )
 
+    print(
+        f"[INFO] Building {source} wardrobe..."
+    )
 
-    # Scan folder safely
-    try:
+    if not os.path.exists(
+        folder_path
+    ):
+        raise FileNotFoundError(
+            f"Wardrobe folder not found: "
+            f"{folder_path}"
+        )
 
-        wardrobe_items = analyze_wardrobe_folder(
+    wardrobe_items = (
+        analyze_wardrobe_folder(
             folder_path
         )
-
-    except Exception as e:
-
-        print(
-            f"[ERROR] Unable to scan wardrobe folder: {str(e)}"
-        )
-
-        return []
-
+    )
 
     wardrobe = []
 
-
-    image_extensions = [
+    image_extensions = (
         ".jpg",
         ".jpeg",
         ".png",
-        ".webp"
-    ]
+        ".webp",
+    )
 
-
-    for index, item in enumerate(
-        wardrobe_items,
-        start=1
-    ):
-
+    for item in wardrobe_items:
         try:
-
-            print(
-                f"[INFO] Processing {index}/{len(wardrobe_items)} : {item.id_baju}"
-            )
-
-
             image_url = None
-
+            image_file_path = None
 
             for ext in image_extensions:
-
                 possible = os.path.join(
                     folder_path,
-                    item.id_baju + ext
+                    f"{item.id_baju}{ext}",
                 )
 
-
-                if os.path.exists(possible):
+                if os.path.exists(
+                    possible
+                ):
+                    image_file_path = possible
 
                     image_url = (
-                        "/clothes/"
-                        + os.path.basename(possible)
+                        f"/clothes/{source}/"
+                        f"{os.path.basename(possible)}"
                     )
 
                     break
 
+            if image_file_path is None:
+                print(
+                    f"[WARNING] Image missing for "
+                    f"{item.id_baju}"
+                )
+                continue
 
             item = item.model_copy(
                 update={
-                    "image_path": image_url
+                    "image_path": image_url,
                 }
             )
-
 
             wardrobe.append(
                 item.model_dump()
             )
 
-
-            # Save immediately after success
             save_json(
                 wardrobe,
-                WARDROBE_FILE
+                wardrobe_file,
             )
 
-
+        except Exception as exc:
             print(
-                f"[SUCCESS] Saved {item.id_baju}"
+                f"[WARNING] Skipping "
+                f"{item.id_baju}: {exc}"
             )
-
-
-        except Exception as e:
-
-
-            print(
-                f"[WARNING] Skipping {item.id_baju}"
-            )
-
-
-            print(
-                f"[ERROR] {str(e)}"
-            )
-
-
-            continue
-
-
 
     print(
-        "[INFO] Wardrobe database rebuild completed."
+        f"[INFO] {source} wardrobe contains "
+        f"{len(wardrobe)} items."
     )
-
-
-    print(
-        f"[INFO] Total items saved: {len(wardrobe)}"
-    )
-
 
     return wardrobe
 
 
-
-
-# ==========================================================
-# Add wardrobe item
-# ==========================================================
-
-def add_wardrobe_item(image_path: str):
+def add_wardrobe_item(
+    image_path: str,
+    source: str = "personal",
+) -> list[dict]:
     """
-    Analyze one clothing image and add/update it
-    in wardrobe.json.
+    Add one image to the selected wardrobe.
     """
 
-    wardrobe = load_json(
-        WARDROBE_FILE
+    folder_path, wardrobe_file = (
+        _get_wardrobe_paths(source)
     )
 
-
-    if wardrobe is None:
-
-        wardrobe = []
-
+    wardrobe = (
+        load_json(
+            wardrobe_file
+        )
+        or []
+    )
 
     os.makedirs(
-        WARDROBE_IMAGE_FOLDER,
-        exist_ok=True
+        folder_path,
+        exist_ok=True,
     )
-
 
     filename = os.path.basename(
         image_path
     )
 
-
     destination = os.path.join(
-        WARDROBE_IMAGE_FOLDER,
-        filename
+        folder_path,
+        filename,
     )
 
-
-    if os.path.abspath(image_path) != os.path.abspath(destination):
-
+    if os.path.abspath(
+        image_path
+    ) != os.path.abspath(
+        destination
+    ):
         shutil.copy(
             image_path,
-            destination
+            destination,
         )
-
 
     item = analyze_wardrobe_item(
         destination
     )
 
-
     item = item.model_copy(
         update={
-            "id_baju": os.path.splitext(filename)[0],
-            "image_path": "/clothes/" + filename
+            "id_baju": (
+                os.path.splitext(filename)[0]
+            ),
+            "image_path": (
+                f"/clothes/{source}/"
+                f"{filename}"
+            ),
         }
     )
 
-
-    # Remove old version if exists
-
     wardrobe = [
-
         cloth
         for cloth in wardrobe
-        if cloth["id_baju"] != item.id_baju
-
+        if cloth["id_baju"]
+        != item.id_baju
     ]
-
 
     wardrobe.append(
         item.model_dump()
     )
 
-
     save_json(
         wardrobe,
-        WARDROBE_FILE
+        wardrobe_file,
     )
-
-
-    print(
-        "[INFO] Wardrobe item added/updated."
-    )
-
 
     return wardrobe
 
 
+def remove_wardrobe_item(
+    item_id: str,
+    source: str = "personal",
+) -> list[dict]:
 
-
-# ==========================================================
-# Delete wardrobe item
-# ==========================================================
-
-def remove_wardrobe_item(item_id: str):
-    """
-    Remove wardrobe item and delete its image.
-    """
-
-    wardrobe = load_json(
-        WARDROBE_FILE
+    folder_path, wardrobe_file = (
+        _get_wardrobe_paths(source)
     )
 
+    wardrobe = (
+        load_json(
+            wardrobe_file
+        )
+        or []
+    )
 
-    if wardrobe is None:
-
-        return []
-
-
-    item_to_remove = None
-
-
-    for item in wardrobe:
-
-
-        if item["id_baju"] == item_id:
-
-            item_to_remove = item
-
-            break
-
-
+    item_to_remove = next(
+        (
+            item
+            for item in wardrobe
+            if item["id_baju"]
+            == item_id
+        ),
+        None,
+    )
 
     if item_to_remove is None:
-
         return wardrobe
-
-
 
     image_url = item_to_remove.get(
         "image_path"
     )
 
-
     if image_url:
-
-
-        image_file = image_url.replace(
-            "/clothes/",
-            ""
+        filename = os.path.basename(
+            image_url
         )
-
 
         image_path = os.path.join(
-            WARDROBE_IMAGE_FOLDER,
-            image_file
+            folder_path,
+            filename,
         )
 
-
-        if os.path.exists(image_path):
-
+        if os.path.exists(
+            image_path
+        ):
             os.remove(
                 image_path
             )
 
-
-            print(
-                f"[INFO] Deleted image {image_path}"
-            )
-
-
-
     wardrobe = [
-
         item
         for item in wardrobe
-        if item["id_baju"] != item_id
-
+        if item["id_baju"]
+        != item_id
     ]
-
 
     save_json(
         wardrobe,
-        WARDROBE_FILE
+        wardrobe_file,
     )
-
-
-    print(
-        f"[INFO] Removed {item_id}"
-    )
-
 
     return wardrobe
 
 
+def list_wardrobe(
+    source: str = "personal",
+) -> list[dict]:
 
+    _, wardrobe_file = (
+        _get_wardrobe_paths(source)
+    )
 
-# ==========================================================
-# Get complete wardrobe
-# ==========================================================
-
-def list_wardrobe():
-
-    wardrobe = load_json(
-        WARDROBE_FILE
+    return (
+        load_json(
+            wardrobe_file
+        )
+        or []
     )
 
 
-    if wardrobe is None:
+def get_wardrobe_image_paths(
+    source: str,
+    item_ids: list[str],
+) -> list[str]:
+    """
+    Convert selected wardrobe IDs into actual
+    local image paths.
+    """
 
-        return []
-
-
-    return wardrobe
-
-
-
-
-# ==========================================================
-# Filter wardrobe by category
-# ==========================================================
-
-def get_items_by_category(category: str):
-
-    wardrobe = load_json(
-        WARDROBE_FILE
+    folder_path, wardrobe_file = (
+        _get_wardrobe_paths(source)
     )
 
+    wardrobe = (
+        load_json(
+            wardrobe_file
+        )
+        or []
+    )
 
-    if wardrobe is None:
-
-        return []
-
-
-    return [
-
-        item
+    lookup = {
+        item["id_baju"]: item
         for item in wardrobe
-        if item["category"].lower() == category.lower()
+    }
 
-    ]
+    paths = []
+
+    for item_id in item_ids:
+        item = lookup.get(
+            item_id
+        )
+
+        if item is None:
+            raise ValueError(
+                f"Wardrobe item not found: "
+                f"{item_id}"
+            )
+
+        image_url = item.get(
+            "image_path"
+        )
+
+        if not image_url:
+            raise ValueError(
+                f"No image path stored for "
+                f"{item_id}"
+            )
+
+        filename = os.path.basename(
+            image_url
+        )
+
+        image_path = os.path.join(
+            folder_path,
+            filename,
+        )
+
+        if not os.path.isfile(
+            image_path
+        ):
+            raise FileNotFoundError(
+                f"Wardrobe image missing: "
+                f"{image_path}"
+            )
+
+        paths.append(
+            image_path
+        )
+
+    return paths

@@ -1,41 +1,55 @@
 import json
 import os
+from typing import Any
 
 
-def load_json(path):
+def load_json(
+    path: str,
+) -> Any:
 
-    if not os.path.exists(path):
+    if not os.path.exists(
+        path
+    ):
         return None
 
-    if os.path.getsize(path) == 0:
+    if os.path.getsize(
+        path
+    ) == 0:
         return None
 
     with open(
         path,
         "r",
-        encoding="utf-8"
-    ) as f:
+        encoding="utf-8",
+    ) as file:
+        return json.load(
+            file
+        )
 
-        return json.load(f)
 
+def save_json(
+    data: Any,
+    path: str,
+) -> None:
 
-
-def save_json(data, path):
-
-    os.makedirs(
-        os.path.dirname(path),
-        exist_ok=True
+    directory = os.path.dirname(
+        path
     )
+
+    if directory:
+        os.makedirs(
+            directory,
+            exist_ok=True,
+        )
 
     with open(
         path,
         "w",
-        encoding="utf-8"
-    ) as f:
-
+        encoding="utf-8",
+    ) as file:
         json.dump(
             data,
-            f,
+            file,
             indent=4,
-            ensure_ascii=False
+            ensure_ascii=False,
         )

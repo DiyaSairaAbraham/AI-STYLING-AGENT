@@ -1,10 +1,24 @@
 import json
 import os
 
-from agents.image_agent import generate_outfit_image
-from agents.shopping_agent import create_search_links
-from agents.stylist_agent import generate_style_recommendation
-from agents.vision_agent import analyze_user_image
+from agents.image_agent import (
+    generate_outfit_image,
+)
+from agents.shopping_agent import (
+    create_search_links,
+)
+from agents.stylist_agent import (
+    generate_style_recommendation,
+    generate_wardrobe_recommendation,
+)
+from agents.vision_agent import (
+    analyze_user_image,
+)
+
+from utils.wardrobe_manager import (
+    get_wardrobe_image_paths,
+    list_wardrobe,
+)
 from utils.logger import log
 
 
@@ -15,22 +29,9 @@ OUTPUT_IMAGES = "outputs/images"
 def run_function_1_pipeline(
     user_image_path: str,
 ) -> dict:
-    """
-    Execute Function 1.
-
-    Flow:
-
-    User Image
-        -> Vision Agent
-        -> Stylist Agent
-        -> Shopping Links
-        -> Image Generator
-
-    Function 1 does NOT use the personal or commercial wardrobe.
-    """
 
     log(
-        "Starting Function 1 AI Stylist Pipeline"
+        "Starting Function 1 AI Styling Pipeline"
     )
 
     os.makedirs(
@@ -43,159 +44,185 @@ def run_function_1_pipeline(
         exist_ok=True,
     )
 
-    # ==========================================
-    # MODULE 1 - VISION
-    # ==========================================
-
-    log(
-        "Starting Vision Agent"
-    )
+    # --------------------------------------------
+    # Vision
+    # --------------------------------------------
 
     module1 = analyze_user_image(
-        user_image_path,
+        user_image_path
     )
 
-    with open(
-        f"{OUTPUT_JSON}/user_profile.json",
-        "w",
-        encoding="utf-8",
-    ) as file:
+    # --------------------------------------------
+    # AI Styling
+    # --------------------------------------------
 
-        json.dump(
-            module1.model_dump(),
-            file,
-            indent=4,
-            ensure_ascii=False,
-        )
-
-    log(
-        "Vision completed"
-    )
-
-    # ==========================================
-    # MODULE 3 - STYLIST
-    # ==========================================
-
-    log(
-        "Starting Stylist Agent"
-    )
-
-    recommendations = (
+    recommendation = (
         generate_style_recommendation(
-            module1,
+            module1
         )
     )
 
-    # ==========================================
-    # SHOPPING LINKS
-    # ==========================================
-
-    for outfit in (
-        recommendations.recommendations
-    ):
-
-        outfit.shopping_links = (
-            create_search_links(
-                outfit,
-            )
-        )
-
-    with open(
-        f"{OUTPUT_JSON}/recommendation.json",
-        "w",
-        encoding="utf-8",
-    ) as file:
-
-        json.dump(
-            recommendations.model_dump(),
-            file,
-            indent=4,
-            ensure_ascii=False,
-        )
-
-    log(
-        "Styling recommendations completed"
+    outfit = (
+        recommendation.recommendation
     )
 
-    # ==========================================
-    # MODULE 4 - IMAGE GENERATION
-    # ==========================================
+    # --------------------------------------------
+    # Shopping links
+    # --------------------------------------------
 
-    generated_images = []
-
-    for index, outfit in enumerate(
-        recommendations.recommendations,
-        start=1,
-    ):
-
-        try:
-
-            image_path = generate_outfit_image(
-                prompt=(
-                    outfit.image_generation_prompt
-                ),
-                user_image_path=(
-                    user_image_path
-                ),
-                output_path=(
-                    f"{OUTPUT_IMAGES}/"
-                    f"recommended_outfit_{index}.png"
-                ),
-            )
-
-            generated_images.append(
-                {
-                    "category": outfit.category,
-                    "path": image_path,
-                }
-            )
-
-        except Exception as exc:
-
-            log(
-                f"Image generation failed for "
-                f"{outfit.category}: {str(exc)}"
-            )
-
-            generated_images.append(
-                {
-                    "category": outfit.category,
-                    "error": str(exc),
-                }
-            )
-
-    log(
-        "Function 1 pipeline completed successfully"
+    outfit.shopping_links = (
+        create_search_links(
+            outfit
+        )
     )
 
-    return {
+    # --------------------------------------------
+    # Image
+    # --------------------------------------------
+
+    image_path = generate_outfit_image(
+        prompt=(
+            outfit.image_generation_prompt
+        ),
+        user_image_path=user_image_path,
+        output_path=(
+            f"{OUTPUT_IMAGES}/"
+            "function1_ai_styling.png"
+        ),
+    )
+
+    result = {
         "user_profile": (
             module1.model_dump()
         ),
-        "recommendations": (
-            recommendations.model_dump()
+        "recommendation": (
+            outfit.model_dump()
         ),
-        "images": generated_images,
+        "image": image_path,
     }
 
+    with open(
+        f"{OUTPUT_JSON}/function1.json",
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            result,
+            file,
+            indent=4,
+            ensure_ascii=False,
+        )
 
-# -------------------------------------------------
-# Backward-compatible wrapper
-# -------------------------------------------------
+    return result
 
-def run_full_pipeline(
+
+def run_function_2_pipeline(
     user_image_path: str,
-    wardrobe_path: str | None = None,
+    wardrobe_source: str,
 ) -> dict:
-    """
-    Backward-compatible wrapper for existing callers.
 
-    wardrobe_path is intentionally ignored because Function 1
-    does not use a wardrobe.
-
-    Function 2 can use a separate pipeline later.
-    """
-
-    return run_function_1_pipeline(
-        user_image_path,
+    log(
+        "Starting Function 2 Wardrobe Styling Pipeline"
     )
+
+    os.makedirs(
+        OUTPUT_JSON,
+        exist_ok=True,
+    )
+
+    os.makedirs(
+        OUTPUT_IMAGES,
+        exist_ok=True,
+    )
+
+    # --------------------------------------------
+    # Vision
+    # --------------------------------------------
+
+    module1 = analyze_user_image(
+        user_image_path
+    )
+
+    # --------------------------------------------
+    # Wardrobe
+    # --------------------------------------------
+
+    wardrobe = list_wardrobe(
+        wardrobe_source
+    )
+
+    if not wardrobe:
+        raise ValueError(
+            f"{wardrobe_source} wardrobe is empty."
+        )
+
+    # --------------------------------------------
+    # Wardrobe Styling
+    # --------------------------------------------
+
+    recommendation = (
+        generate_wardrobe_recommendation(
+            module1_data=module1,
+            wardrobe_items=wardrobe,
+            wardrobe_source=wardrobe_source,
+        )
+    )
+
+    outfit = (
+        recommendation.recommendation
+    )
+
+    # --------------------------------------------
+    # Selected wardrobe images
+    # --------------------------------------------
+
+    wardrobe_images = (
+        get_wardrobe_image_paths(
+            source=wardrobe_source,
+            item_ids=(
+                outfit.selected_item_ids
+            ),
+        )
+    )
+
+    # --------------------------------------------
+    # Image generation
+    # --------------------------------------------
+
+    image_path = generate_outfit_image(
+        prompt=(
+            outfit.image_generation_prompt
+        ),
+        user_image_path=user_image_path,
+        wardrobe_image_paths=wardrobe_images,
+        output_path=(
+            f"{OUTPUT_IMAGES}/"
+            f"function2_{wardrobe_source}.png"
+        ),
+    )
+
+    result = {
+        "user_profile": (
+            module1.model_dump()
+        ),
+        "wardrobe_source": wardrobe_source,
+        "recommendation": (
+            outfit.model_dump()
+        ),
+        "image": image_path,
+    }
+
+    with open(
+        f"{OUTPUT_JSON}/"
+        f"function2_{wardrobe_source}.json",
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            result,
+            file,
+            indent=4,
+            ensure_ascii=False,
+        )
+
+    return result

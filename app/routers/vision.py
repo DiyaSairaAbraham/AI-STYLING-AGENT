@@ -1,107 +1,74 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
-import shutil
 import os
+import shutil
+from typing import Any
+
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from agents.vision_agent import analyze_user_image
+from utils.json_utils import save_json
 
 
 router = APIRouter(
     prefix="/vision",
-    tags=["Vision"]
+    tags=["Vision"],
 )
 
 
 UPLOAD_DIR = "uploads"
+PROFILE_FILE = "outputs/json/user_profile.json"
 
 
 @router.post("/analyze")
 async def analyze_image(
-    file: UploadFile = File(...)
-):
+    file: UploadFile = File(...),
+) -> dict[str, Any]:
+    allowed_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPG, PNG and WEBP images are allowed.",
+        )
+
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    os.makedirs(
+        os.path.dirname(PROFILE_FILE),
+        exist_ok=True,
+    )
+
+    filename = file.filename or "user_image.jpg"
+    image_path = os.path.join(UPLOAD_DIR, filename)
 
     try:
+        with open(image_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-        # Validate file type
-        allowed_types = [
-            "image/jpeg",
-            "image/png",
-            "image/webp"
-        ]
+        result = analyze_user_image(image_path)
 
-        if file.content_type not in allowed_types:
+        profile_data = result.model_dump()
 
-            raise HTTPException(
-                status_code=400,
-                detail="Only JPG, PNG and WEBP images are allowed"
-            )
-
-
-        os.makedirs(
-            UPLOAD_DIR,
-            exist_ok=True
+        save_json(
+            profile_data,
+            PROFILE_FILE,
         )
-
-
-        image_path = os.path.join(
-            UPLOAD_DIR,
-            file.filename
-        )
-
-
-        # Save uploaded image
-        with open(
-            image_path,
-            "wb"
-        ) as buffer:
-
-            shutil.copyfileobj(
-                file.file,
-                buffer
-            )
-
-
-        print(
-            "[INFO] Running Vision Agent"
-        )
-
-
-        result = analyze_user_image(
-            image_path
-        )
-
-
-        print(
-            "[INFO] Vision completed"
-        )
-
 
         return {
-
             "status": "success",
-
-            "message":
-            "Vision analysis completed",
-
-            "profile":
-            result.model_dump()
-
+            "message": "Vision analysis completed.",
+            "profile": profile_data,
+            "profile_file": PROFILE_FILE,
         }
 
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-
-        print(
-            f"[ERROR] Vision failed: {str(e)}"
-        )
-
+    except Exception as exc:
         raise HTTPException(
             status_code=500,
             detail={
                 "status": "failed",
-                "message": "Vision analysis failed",
-                "error": str(e)
-            }
-        )
+                "message": "Vision analysis failed.",
+                "error": str(exc),
+            },
+        ) from exc

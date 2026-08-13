@@ -1,14 +1,20 @@
 import os
 import uuid
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Request,
+)
 from pydantic import BaseModel
 
-from agents.image_agent import generate_outfit_image
+from agents.image_agent import (
+    generate_outfit_image,
+)
 
 
 router = APIRouter(
-    prefix="/recommendation",
+    prefix="/image",
     tags=["Image Generation"],
 )
 
@@ -16,83 +22,81 @@ router = APIRouter(
 class ImageGenerationRequest(BaseModel):
     prompt: str
     user_image_path: str
+    wardrobe_image_paths: list[str] = []
 
 
-@router.post("/generate-image")
-async def generate_selected_outfit(
+@router.post(
+    "/generate",
+)
+async def generate_image(
     request: ImageGenerationRequest,
     http_request: Request,
 ) -> dict[str, str]:
-    try:
-        print("[INFO] Generating selected outfit image")
 
-        if not os.path.isfile(request.user_image_path):
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    f"User image not found: "
-                    f"{request.user_image_path}"
+    if not os.path.isfile(
+        request.user_image_path
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"User image not found: "
+                f"{request.user_image_path}"
+            ),
+        )
+
+    output_dir = (
+        "outputs/images"
+    )
+
+    os.makedirs(
+        output_dir,
+        exist_ok=True,
+    )
+
+    image_name = (
+        f"outfit_{uuid.uuid4().hex}.png"
+    )
+
+    output_path = os.path.join(
+        output_dir,
+        image_name,
+    )
+
+    try:
+        image_path = (
+            generate_outfit_image(
+                prompt=request.prompt,
+                user_image_path=(
+                    request.user_image_path
+                ),
+                output_path=output_path,
+                wardrobe_image_paths=(
+                    request.wardrobe_image_paths
                 ),
             )
-
-        output_dir = os.path.join(
-            "outputs",
-            "images",
         )
 
-        os.makedirs(
-            output_dir,
-            exist_ok=True,
-        )
-
-        image_name = (
-            f"outfit_{uuid.uuid4().hex}.png"
-        )
-
-        output_path = os.path.join(
-            output_dir,
-            image_name,
-        )
-
-        image_path = generate_outfit_image(
-            prompt=request.prompt,
-            user_image_path=request.user_image_path,
-            output_path=output_path,
-        )
-
-        image_filename = os.path.basename(
+        filename = os.path.basename(
             image_path
         )
 
         image_url = (
-            str(http_request.base_url).rstrip("/")
-            + f"/images/{image_filename}"
-        )
-
-        print(
-            f"[INFO] Image URL: {image_url}"
+            str(
+                http_request.base_url
+            ).rstrip("/")
+            + f"/images/{filename}"
         )
 
         return {
             "status": "success",
-            "message": "Outfit image generated",
+            "message": (
+                "Image generated."
+            ),
             "image_url": image_url,
         }
 
-    except HTTPException:
-        raise
-
     except Exception as exc:
-        print(
-            "[ERROR] Image generation failed: "
-            f"{exc}"
-        )
-
         raise HTTPException(
             status_code=500,
-            detail={
-                "status": "failed",
-                "message": "Image generation failed",
-                "error": str(exc),
-            },
+            detail=str(exc),
         ) from exc

@@ -4,7 +4,7 @@ from typing import Any
 from openai import OpenAI
 
 from config import OPENAI_API_KEY, STYLIST_MODEL
-from schemas.models import Module3Output
+from schemas.models import Function1Output, Function2Output
 from utils.logger import log
 
 
@@ -13,158 +13,73 @@ client = OpenAI(
 )
 
 
-STYLIST_PROMPT = """
-You are an expert personal fashion director and stylist.
+# ============================================================
+# FUNCTION 1 - AI STYLING
+# ============================================================
 
-Your task is to design personalized outfit concepts based entirely on
-the user's visual analysis.
+AI_STYLING_PROMPT = """
+You are an expert personal fashion stylist.
 
-FUNCTION 1 RULE:
+You are performing FUNCTION 1: AI STYLING.
 
 The user has NOT selected a wardrobe.
 
-You have COMPLETE FREEDOM to design the outfit.
+You have complete freedom to design ONE outfit using
+your fashion intelligence.
+
+You MAY invent garments, footwear and accessories.
 
 Do NOT use:
+
 - personal wardrobe
 - commercial wardrobe
 - wardrobe IDs
 - wardrobe databases
-- existing wardrobe clothing as mandatory items
+- wardrobe image paths
 
-The user's current outfit is provided ONLY to understand their current
-style and identify opportunities for improvement.
+Use the user's visual analysis to create a highly
+personalized outfit.
 
-You must generate EXACTLY TWO recommendations:
-
-1. Business Formal
-2. Smart Casual
-
-Do not generate any other categories.
-
-==================================================
-USER ANALYSIS
-==================================================
-
-Use ALL of the following information:
+Consider:
 
 - skin tone
 - hairstyle
 - hair color
+- body silhouette
 - facial features
-- body silhouette/proportions
 - current outfit
-- exactly 2 existing advantages
-- exactly 2 areas for improvement
-
-The advantages describe what is already working well.
-
-The improvement areas describe specific aspects that can be improved.
-
-The final styling must preserve or enhance the advantages while addressing
-the improvement areas.
-
-==================================================
-OUTFIT DESIGN
-==================================================
-
-For EACH recommendation carefully determine:
-
-GARMENTS:
-- garment types
-- silhouette
-- fit
+- styling advantages
+- improvement areas
+- color harmony
+- garment fit
 - proportions
-- layering
-- garment combinations
+- material
+- pattern
+- accessories
+- occasion
 
-COLOR:
-- colors that complement the observed skin tone
-- coordinated color palette
-- appropriate contrast
-- colors that support the selected style
+Return EXACTLY ONE recommendation.
 
-MATERIAL:
-- suitable fabrics
-- fabric weight
-- texture
-- material suitability for the occasion
+The shopping_items field must contain concise descriptions
+of individual products that could be searched online.
 
-PATTERN:
-- whether a pattern should be used
-- pattern type
-- pattern scale
-- how the pattern interacts with the overall appearance
+Do NOT provide URLs.
 
-ACCESSORIES:
-- watch
-- belt
-- bag
-- jewelry where appropriate
-- other suitable accessories
+The application will create H&M and UNIQLO search links
+automatically.
 
-HAIR:
-- hairstyle recommendation
-- hair presentation
-- how the hairstyle complements the outfit
-- maintain compatibility with the user's observed hair color
+The image_generation_prompt must describe:
 
-==================================================
-STYLE REASONING
-==================================================
-
-Styling advice must explain:
-
-1. Why the garments suit the user.
-2. How the outfit preserves or enhances the 2 advantages.
-3. How it addresses the 2 improvement areas.
-4. Why the selected colors work with the observed skin tone.
-5. Why the materials are appropriate.
-6. Why the pattern choice works.
-7. Why the accessories work.
-8. Why the hairstyle complements the complete look.
-
-==================================================
-SHOPPING
-==================================================
-
-The application will provide H&M and UNIQLO links for similar products.
-
-For each outfit, provide several concise shopping item descriptions.
-
-Examples:
-
-- tailored charcoal blazer
-- white silk-blend blouse
-- straight-leg black trousers
-- structured leather handbag
-
-Do NOT provide URLs yourself.
-
-==================================================
-IMAGE GENERATION
-==================================================
-
-Create a detailed image-generation prompt.
-
-The generated image should represent the SAME GENERAL PERSON described by
-the Vision Agent as closely as possible using observable textual
-characteristics.
-
-Do NOT claim that text alone guarantees exact identity preservation.
-
-The image prompt MUST specify:
-
-- full-body fashion photograph
-- face clearly visible
-- hair clearly visible
-- complete outfit visible
+- the same general person
+- full-body composition
+- clearly visible face
+- clearly visible hair
+- complete outfit
 - both shoes visible
-- centered standing pose
 - realistic proportions
 - realistic garment construction
-- realistic fabric appearance
-- accurate clothing layering
+- realistic fabrics
+- accurate layering
 - professional fashion photography
 - clean studio background
 - natural lighting
@@ -174,71 +89,292 @@ The image prompt MUST specify:
 - no text
 - no watermark
 
-==================================================
-OUTPUT
-==================================================
-
-Return ONLY structured output matching the provided schema.
+Return structured output only.
 """
 
 
+# ============================================================
+# FUNCTION 2 - WARDROBE STYLING
+# ============================================================
+
+WARDROBE_STYLING_PROMPT = """
+You are an expert personal fashion stylist.
+
+You are performing FUNCTION 2: WARDROBE STYLING.
+
+The user has selected a specific wardrobe.
+
+You MUST use ONLY the wardrobe items supplied in the
+AVAILABLE WARDROBE section.
+
+You are NOT allowed to invent clothing, footwear,
+or accessories.
+
+Every clothing item used in the recommendation MUST
+correspond to an existing wardrobe item ID.
+
+You may intelligently combine the supplied wardrobe items.
+
+Return EXACTLY ONE complete outfit.
+
+Consider:
+
+- user's skin tone
+- hairstyle
+- hair color
+- body silhouette
+- facial features
+- current outfit
+- styling advantages
+- improvement areas
+- wardrobe item colors
+- wardrobe compatibility
+- proportions
+- occasion
+- layering
+- material
+- pattern
+- overall coordination
+
+IMPORTANT IMAGE RULES:
+
+The generated image must reproduce ONLY the clothing
+items selected from the supplied wardrobe.
+
+Do NOT introduce invented:
+
+- watches
+- bags
+- jewelry
+- belts
+- shoes
+- jackets
+- shirts
+- trousers
+- skirts
+- dresses
+- accessories
+- other clothing
+
+unless that item exists in the supplied wardrobe and
+has been selected using its valid wardrobe ID.
+
+The image-generation prompt MUST clearly state that the
+supplied wardrobe images are the authoritative references
+for the clothing.
+
+The image generator must reproduce the selected wardrobe
+items as closely as possible in:
+
+- garment type
+- color
+- material
+- pattern
+- silhouette
+- visible construction
+- overall appearance
+
+The user's identity/general appearance comes from the
+Vision Agent/user image.
+
+The clothing comes ONLY from the selected wardrobe images.
+
+Return structured output only.
+"""
+
+
+# ============================================================
+# HELPERS
+# ============================================================
+
+def _normalize_wardrobe_source(source: str) -> str:
+    """
+    Convert all accepted source names to the canonical values
+    used internally by the application.
+    """
+    normalized = source.strip().lower()
+
+    if normalized in {
+        "personal",
+        "personal wardrobe",
+        "wardrobe_1",
+        "1",
+    }:
+        return "personal"
+
+    if normalized in {
+        "commercial",
+        "commercial wardrobe",
+        "wardrobe_2",
+        "2",
+    }:
+        return "commercial"
+
+    raise ValueError(
+        "wardrobe_source must be "
+        "'personal' or 'commercial'."
+    )
+
+
+def _display_wardrobe_source(source: str) -> str:
+    """Return the human-readable wardrobe source name."""
+    if source == "personal":
+        return "Personal Wardrobe"
+
+    if source == "commercial":
+        return "Commercial Wardrobe"
+
+    raise ValueError(
+        f"Unsupported wardrobe source: {source}"
+    )
+
+
+# ============================================================
+# FUNCTION 1
+# ============================================================
+
 def generate_style_recommendation(
     module1_data: Any,
-    wardrobe_items: list | None = None,
-    category: str | None = None,
-) -> Module3Output:
+) -> Function1Output:
     """
-    Generate Function 1 recommendations.
+    Generate exactly one AI-created outfit.
 
-    Function 1 intentionally ignores wardrobe_items because it gives
-    the stylist complete freedom to design new outfits.
-
-    wardrobe_items remains in the signature for backward compatibility
-    with existing callers and for Function 2 integration later.
+    Function 1 does not use either wardrobe.
     """
 
-    log("Running Stylist Agent (Module 3)")
+    log("Running AI Styling Agent")
 
     try:
         if hasattr(module1_data, "model_dump"):
             module1_data = module1_data.model_dump()
 
-        allowed_categories = {
-            "Business Formal",
-            "Smart Casual",
+        context_prompt = f"""
+FUNCTION: AI STYLING
+
+The user has not selected a wardrobe.
+
+Create exactly ONE outfit using your own fashion intelligence.
+
+USER VISUAL ANALYSIS:
+
+{json.dumps(
+    module1_data,
+    indent=2,
+    ensure_ascii=False,
+)}
+"""
+
+        completion = client.beta.chat.completions.parse(
+            model=STYLIST_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": AI_STYLING_PROMPT,
+                },
+                {
+                    "role": "user",
+                    "content": context_prompt,
+                },
+            ],
+            response_format=Function1Output,
+        )
+
+        result = completion.choices[0].message.parsed
+
+        if result is None:
+            raise ValueError(
+                "AI Stylist returned no result."
+            )
+
+        if result.recommendation is None:
+            raise ValueError(
+                "AI Stylist returned no recommendation."
+            )
+
+        if not result.recommendation.shopping_items:
+            raise ValueError(
+                "AI Stylist returned no shopping items."
+            )
+
+        log(
+            "AI Styling recommendation completed"
+        )
+
+        return result
+
+    except Exception as exc:
+        log(
+            f"AI Styling failed: {str(exc)}"
+        )
+        raise
+
+
+# ============================================================
+# FUNCTION 2
+# ============================================================
+
+def generate_wardrobe_recommendation(
+    module1_data: Any,
+    wardrobe_items: list[dict],
+    wardrobe_source: str,
+) -> Function2Output:
+    """
+    Generate exactly one outfit using ONLY the supplied wardrobe.
+
+    Accepted wardrobe_source values:
+
+        personal
+        commercial
+        Personal Wardrobe
+        Commercial Wardrobe
+        wardrobe_1
+        wardrobe_2
+        1
+        2
+    """
+
+    log(
+        "Running Wardrobe Styling Agent "
+        f"using {wardrobe_source}"
+    )
+
+    try:
+        # Normalize the source so the stylist, router and
+        # wardrobe manager all use the same internal value.
+        normalized_source = _normalize_wardrobe_source(
+            wardrobe_source
+        )
+
+        display_source = _display_wardrobe_source(
+            normalized_source
+        )
+
+        if hasattr(module1_data, "model_dump"):
+            module1_data = module1_data.model_dump()
+
+        if not wardrobe_items:
+            raise ValueError(
+                f"{display_source} is empty."
+            )
+
+        wardrobe_ids = {
+            str(item["id_baju"])
+            for item in wardrobe_items
+            if item.get("id_baju")
         }
 
-        if category is None:
-            category_instruction = """
-Generate EXACTLY TWO recommendations:
-
-1. Business Formal
-2. Smart Casual
-
-Do not generate any other categories.
-"""
-        else:
-            normalized_category = category.strip()
-
-            if normalized_category not in allowed_categories:
-                raise ValueError(
-                    "Category must be either "
-                    "'Business Formal' or 'Smart Casual'."
-                )
-
-            category_instruction = f"""
-Generate EXACTLY ONE recommendation.
-
-Category:
-{normalized_category}
-
-Do not generate any other category.
-"""
+        if not wardrobe_ids:
+            raise ValueError(
+                f"No valid wardrobe IDs found in "
+                f"{display_source}."
+            )
 
         context_prompt = f"""
-TASK FOR THIS REQUEST:
+FUNCTION: WARDROBE STYLING
 
-{category_instruction}
+WARDROBE SOURCE:
+
+{display_source}
 
 USER VISUAL ANALYSIS:
 
@@ -248,14 +384,44 @@ USER VISUAL ANALYSIS:
     ensure_ascii=False,
 )}
 
-Remember:
+AVAILABLE WARDROBE ITEMS:
 
-- Function 1 does not use a wardrobe.
-- You have complete freedom to design new clothing.
-- Use the user's advantages.
-- Address the user's improvement areas.
-- Consider garment, hair, skin tone, material, pattern,
-  accessories, fit, silhouette and proportions.
+{json.dumps(
+    wardrobe_items,
+    indent=2,
+    ensure_ascii=False,
+)}
+
+VALID WARDROBE IDS:
+
+{json.dumps(
+    sorted(wardrobe_ids),
+    indent=2,
+)}
+
+STRICT SELECTION RULE:
+
+Create exactly ONE complete outfit.
+
+You may select ONLY wardrobe items listed above.
+
+Every value in selected_item_ids MUST exactly match
+one of the VALID WARDROBE IDS.
+
+Do not invent an item.
+
+Do not create an item description and pretend that it
+belongs to the wardrobe.
+
+Do not add an accessory unless it exists in the wardrobe.
+
+The final outfit must be constructed entirely from
+the supplied wardrobe.
+
+The image-generation prompt must explicitly identify
+the selected wardrobe IDs and instruct the image
+generator that the supplied wardrobe images are the
+authoritative clothing references.
 """
 
         completion = client.beta.chat.completions.parse(
@@ -263,67 +429,58 @@ Remember:
             messages=[
                 {
                     "role": "system",
-                    "content": STYLIST_PROMPT,
+                    "content": WARDROBE_STYLING_PROMPT,
                 },
                 {
                     "role": "user",
                     "content": context_prompt,
                 },
             ],
-            response_format=Module3Output,
+            response_format=Function2Output,
         )
 
         result = completion.choices[0].message.parsed
 
         if result is None:
             raise ValueError(
-                "Stylist Agent returned no structured result."
+                "Wardrobe Stylist returned no result."
             )
 
-        expected_count = (
-            1
-            if category is not None
-            else 2
-        )
-
-        if len(result.recommendations) != expected_count:
+        if result.recommendation is None:
             raise ValueError(
-                f"Expected {expected_count} recommendation(s), "
-                f"but received {len(result.recommendations)}."
+                "Wardrobe Stylist returned no recommendation."
             )
 
-        actual_categories = {
-            recommendation.category
-            for recommendation in result.recommendations
+        selected_ids = {
+            str(item_id)
+            for item_id in result.recommendation.selected_item_ids
         }
 
-        if category is None:
-            expected_categories = {
-                "Business Formal",
-                "Smart Casual",
-            }
+        if not selected_ids:
+            raise ValueError(
+                "Wardrobe Stylist selected no wardrobe items."
+            )
 
-            if actual_categories != expected_categories:
-                raise ValueError(
-                    "Stylist Agent must return exactly "
-                    "Business Formal and Smart Casual."
-                )
-        else:
-            if result.recommendations[0].category != category:
-                raise ValueError(
-                    f"Stylist Agent returned "
-                    f"'{result.recommendations[0].category}' "
-                    f"instead of '{category}'."
-                )
+        invalid_ids = selected_ids - wardrobe_ids
+
+        if invalid_ids:
+            raise ValueError(
+                "Wardrobe Stylist selected invalid wardrobe IDs: "
+                f"{sorted(invalid_ids)}"
+            )
+
+        # Force the returned source to the canonical value
+        # expected by the API response.
+        result.wardrobe_source = normalized_source
 
         log(
-            "Stylist recommendation completed"
+            "Wardrobe Styling recommendation completed"
         )
 
         return result
 
     except Exception as exc:
         log(
-            f"Stylist Agent failed: {str(exc)}"
+            f"Wardrobe Styling failed: {str(exc)}"
         )
         raise

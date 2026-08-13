@@ -4,51 +4,52 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import health
-from app.routers import vision
-from app.routers import wardrobe
-from app.routers import recommendation
-from app.routers import image_generation
+from app.routers import (
+    health,
+    vision,
+    wardrobe,
+    recommendation,
+    image_generation,
+)
 
 
 # ============================================================
 # REQUIRED DIRECTORIES
 # ============================================================
 
-os.makedirs(
+
+DIRECTORIES = [
     "outputs",
-    exist_ok=True,
-)
-
-os.makedirs(
     "outputs/images",
-    exist_ok=True,
-)
-
-os.makedirs(
-    "wardrobe",
-    exist_ok=True,
-)
-
-os.makedirs(
+    "outputs/json",
     "uploads",
-    exist_ok=True,
-)
+    "wardrobe",
+    "wardrobe_2",
+]
+
+
+for directory in DIRECTORIES:
+    os.makedirs(
+        directory,
+        exist_ok=True,
+    )
 
 
 # ============================================================
-# FASTAPI APPLICATION
+# APPLICATION
 # ============================================================
+
 
 app = FastAPI(
     title="AI Styling Agent API",
-    version="1.0.0",
+    version="2.0.0",
 )
 
 
 # ============================================================
 # CORS
 # ============================================================
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,6 +64,7 @@ app.add_middleware(
 # STATIC FILES
 # ============================================================
 
+
 app.mount(
     "/images",
     StaticFiles(
@@ -70,6 +72,7 @@ app.mount(
     ),
     name="images",
 )
+
 
 app.mount(
     "/outputs",
@@ -79,18 +82,31 @@ app.mount(
     name="outputs",
 )
 
+
+# Personal wardrobe
 app.mount(
-    "/clothes",
+    "/clothes/personal",
     StaticFiles(
         directory="wardrobe",
     ),
-    name="clothes",
+    name="personal_clothes",
+)
+
+
+# Commercial wardrobe
+app.mount(
+    "/clothes/commercial",
+    StaticFiles(
+        directory="wardrobe_2",
+    ),
+    name="commercial_clothes",
 )
 
 
 # ============================================================
 # ROUTERS
 # ============================================================
+
 
 app.include_router(
     health.router,
@@ -114,17 +130,25 @@ app.include_router(
 
 
 # ============================================================
-# ROOT ENDPOINT
+# ROOT
 # ============================================================
+
 
 @app.get("/")
 def home() -> dict[str, str]:
     return {
-        "message": "AI Styling Agent API running",
+        "message": (
+            "AI Styling Agent API running."
+        ),
+        "architecture": (
+            "Upload once -> AI Styling or Wardrobe Styling"
+        ),
         "function_1": (
-            "AI-generated Business Formal and Smart Casual outfits"
+            "AI Styling - unrestricted AI outfit "
+            "with shopping links and generated image"
         ),
         "function_2": (
-            "Personal and Commercial Wardrobe - coming next"
+            "Wardrobe Styling - Personal or "
+            "Commercial wardrobe"
         ),
     }
