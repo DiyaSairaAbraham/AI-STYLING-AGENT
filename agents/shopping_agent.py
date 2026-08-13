@@ -1,168 +1,56 @@
 from urllib.parse import quote
 
+from schemas.models import ShoppingLinks, ShoppingItemLink
 
 
-# =====================================================
-# SHOPPING LINK GENERATOR
-# =====================================================
+def create_search_links(outfit) -> ShoppingLinks:
+    """
+    Create H&M and UNIQLO search links for the newly generated outfit.
 
-def create_search_links(outfit):
+    Function 1 does not use personal or commercial wardrobe items.
+    Therefore, links are generated from the stylist's outfit description.
+    """
+
+    search_items: list[ShoppingItemLink] = []
+
+    descriptions = _extract_outfit_items(outfit)
+
+    for description in descriptions:
+        encoded = quote(description)
+
+        search_items.append(
+            ShoppingItemLink(
+                description=description,
+                hm=(
+                    "https://www2.hm.com/en_us/"
+                    f"search-results.html?q={encoded}"
+                ),
+                uniqlo=(
+                    "https://www.uniqlo.com/us/en/"
+                    f"search?q={encoded}"
+                ),
+            )
+        )
+
+    return ShoppingLinks(
+        items=search_items
+    )
 
 
-    items = []
+def _extract_outfit_items(outfit) -> list[str]:
+    """
+    Convert the stylist recommendation into useful individual
+    shopping-search descriptions.
+    """
 
-
-
-    for item in outfit.selected_items:
-
-
-        description = item.description.lower()
-
-
-
-        # -------------------------------------
-        # Extract useful shopping keywords
-        # -------------------------------------
-
-        useful_words = [
-
-            # tops
-            "shirt",
-            "blouse",
-            "top",
-            "tshirt",
-            "hoodie",
-            "sweater",
-
-            # bottoms
-            "pant",
-            "pants",
-            "trouser",
-            "trousers",
-            "jeans",
-            "shorts",
-            "skirt",
-
-            # outerwear
-            "jacket",
-            "blazer",
-            "coat",
-            "vest",
-            "cardigan",
-
-            # dresses
-            "dress",
-            "sundress",
-
-            # footwear
-            "shoe",
-            "shoes",
-            "sneaker",
-            "sneakers",
-            "sandal",
-            "sandals",
-            "heel",
-            "heels",
-            "pump",
-            "pumps"
-
+    if hasattr(outfit, "shopping_items"):
+        return [
+            item.strip()
+            for item in outfit.shopping_items
+            if item and item.strip()
         ]
 
-
-
-        words = description.split()
-
-
-
-        keywords = []
-
-
-
-        for word in words:
-
-
-            clean_word = (
-                word
-                .replace(",", "")
-                .replace(".", "")
-                .replace("/", "")
-            )
-
-
-
-            if clean_word in useful_words:
-
-                keywords.append(clean_word)
-
-
-
-        # -------------------------------------
-        # If category keywords found
-        # keep a meaningful search phrase
-        # -------------------------------------
-
-        if keywords:
-
-
-            search_phrase = " ".join(
-                words[:8]
-            )
-
-
-        else:
-
-
-            # fallback
-            search_phrase = " ".join(
-                words[:5]
-            )
-
-
-
-        encoded = quote(
-            search_phrase
-        )
-
-
-
-        items.append(
-
-
-            {
-
-                "id_baju":
-                    item.id_baju,
-
-
-                "description":
-                    item.description,
-
-
-                "hm":
-                    (
-                        "https://www2.hm.com/en_us/"
-                        f"search-results.html?q={encoded}"
-                    ),
-
-
-                "uniqlo":
-                    (
-                        "https://www.uniqlo.com/us/en/"
-                        f"search?q={encoded}"
-                    )
-
-            }
-
-
-        )
-
-
-
-    return {
-
-
-        "items":
-            items
-
-
-    }
+    return [
+        outfit.category,
+        outfit.styling_advice,
+    ]

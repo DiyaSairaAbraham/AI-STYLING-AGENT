@@ -7,89 +7,162 @@ from utils.logger import log
 
 
 client = OpenAI(
-    api_key=OPENAI_API_KEY
+    api_key=OPENAI_API_KEY,
 )
 
 
 VISION_PROMPT = """
-You are a top-tier fashion stylist and visual analyst.
+You are a professional fashion stylist and visual analyst.
 
 Analyze the user's full-body image carefully.
 
-Return structured JSON ONLY with:
+Your task is ONLY to analyze the user and their current appearance.
+Do NOT design a new outfit.
 
-1. user_features:
-- gender
-- skin_tone
+==================================================
+1. USER FEATURES
+==================================================
+
+Identify visually observable characteristics:
+
+- gender/presentation style
+- skin tone
 - hairstyle
-- body_type
-- facial_features
+- visible hair color
+- body silhouette/proportions
+- general facial features
 
-2. current_outfit:
+Do not make unsupported claims.
+
+==================================================
+2. CURRENT OUTFIT
+==================================================
+
+Identify:
+
 - top
 - bottom
 - shoes
 - accessories
 
-3. analysis:
-- 2 advantages
-- 2 areas for improvement
+For visible clothing, describe where reasonably observable:
 
-Be precise and consistent.
+- garment type
+- color
+- material
+- pattern
+- fit
+- overall style
+
+If something cannot be determined reliably, describe it conservatively.
+
+==================================================
+3. STYLE ANALYSIS
+==================================================
+
+Provide EXACTLY:
+
+2 ADVANTAGES:
+
+These are aspects of the user's current appearance or styling that are
+already working well.
+
+2 AREAS FOR IMPROVEMENT:
+
+These are specific aspects that could be improved through:
+
+- clothing
+- color
+- fit
+- material
+- pattern
+- accessories
+- hairstyle
+- overall styling
+
+The advantages and improvement areas must be useful to the Stylist Agent
+when designing completely new Business Formal and Smart Casual outfits.
+
+IMPORTANT:
+
+- Do not recommend outfits.
+- Do not use a wardrobe database.
+- Do not restrict future recommendations to the current clothes.
+- Be specific.
+- Base observations only on the image.
+- Return structured output only.
 """
 
 
 def analyze_user_image(
-        image_path: str
+    image_path: str,
 ) -> Module1Output:
+    """
+    Analyze the user's image and return structured fashion information.
+    """
 
-
-    log("Running Vision Agent (Module 1)")
-
-
-    base64_image = encode_image(
-        image_path
+    log(
+        "Running Vision Agent (Module 1)"
     )
 
+    try:
+        base64_image = encode_image(
+            image_path
+        )
 
-    response = client.beta.chat.completions.parse(
+        response = client.beta.chat.completions.parse(
+            model=VISION_MODEL,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": VISION_PROMPT,
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": (
+                                    "data:image/jpeg;base64,"
+                                    f"{base64_image}"
+                                ),
+                            },
+                        },
+                    ],
+                },
+            ],
+            response_format=Module1Output,
+        )
 
-        model=VISION_MODEL,
+        result = response.choices[0].message.parsed
 
-        messages=[
-            {
-                "role": "user",
-                "content":[
+        if result is None:
+            raise ValueError(
+                "Vision Agent returned no structured result."
+            )
 
-                    {
-                        "type":"text",
-                        "text":VISION_PROMPT
-                    },
+        if len(result.analysis.advantages) != 2:
+            raise ValueError(
+                "Vision Agent must return exactly 2 advantages."
+            )
 
-                    {
-                        "type":"image_url",
-                        "image_url":{
-                            "url":
-                            f"data:image/jpeg;base64,{base64_image}"
-                        }
-                    }
-                ]
-            }
-        ],
+        if len(
+            result.analysis.areas_for_improvement
+        ) != 2:
+            raise ValueError(
+                "Vision Agent must return exactly "
+                "2 areas for improvement."
+            )
 
-        response_format=Module1Output
-    )
+        log(
+            "Vision analysis completed successfully"
+        )
 
+        return result
 
-    result = (
-        response
-        .choices[0]
-        .message
-        .parsed
-    )
-
-
-    log("Vision analysis completed successfully")
-
-
-    return result
+    except Exception as exc:
+        log(
+            f"Vision Agent failed: {str(exc)}"
+        )
+        raise

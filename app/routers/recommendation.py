@@ -9,16 +9,6 @@ from pydantic import BaseModel
 from agents.shopping_agent import create_search_links
 from agents.stylist_agent import generate_style_recommendation
 from agents.vision_agent import analyze_user_image
-from utils.wardrobe_manager import list_wardrobe
-
-
-class RegenerateRequest(BaseModel):
-    user_image_path: str
-
-
-class RegenerateOneRequest(BaseModel):
-    user_image_path: str
-    category: str
 
 
 router = APIRouter(
@@ -30,47 +20,86 @@ router = APIRouter(
 UPLOAD_DIR = "uploads"
 
 
-@router.post("/options", response_model=None)
+class RegenerateRequest(BaseModel):
+    user_image_path: str
+
+
+class RegenerateOneRequest(BaseModel):
+    user_image_path: str
+    category: str
+
+
+def _validate_category(category: str) -> None:
+    if category not in {
+        "Business Formal",
+        "Smart Casual",
+    }:
+        raise ValueError(
+            "Category must be either "
+            "'Business Formal' or 'Smart Casual'."
+        )
+
+
+@router.post(
+    "/options",
+    response_model=None,
+)
 async def generate_options(
     user_image: UploadFile = File(...),
 ) -> Any:
+
     try:
         os.makedirs(
             UPLOAD_DIR,
             exist_ok=True,
         )
 
-        filename = user_image.filename or "user_image.jpg"
+        filename = (
+            user_image.filename
+            or "user_image.jpg"
+        )
 
         image_path = os.path.join(
             UPLOAD_DIR,
             filename,
         )
 
-        # Save uploaded image.
-        with open(image_path, "wb") as buffer:
+        with open(
+            image_path,
+            "wb",
+        ) as buffer:
             shutil.copyfileobj(
                 user_image.file,
                 buffer,
             )
 
-        print("[INFO] Running fast recommendation flow")
+        print(
+            "[INFO] Starting Function 1 recommendation flow"
+        )
 
-        # Module 1: Vision Agent.
+        # --------------------------------------------------
+        # Module 1: Vision Agent
+        # --------------------------------------------------
+
         user_profile = analyze_user_image(
             image_path,
         )
 
-        # Module 2: Load wardrobe database.
-        wardrobe_data = list_wardrobe()
+        # --------------------------------------------------
+        # Module 3: Stylist Agent
+        #
+        # IMPORTANT:
+        # No wardrobe is loaded here.
+        # --------------------------------------------------
 
-        # Module 3: Stylist Agent.
         recommendations = generate_style_recommendation(
             user_profile,
-            wardrobe_data,
         )
 
-        # Module 4: Shopping Agent.
+        # --------------------------------------------------
+        # Shopping Agent
+        # --------------------------------------------------
+
         for outfit in recommendations.recommendations:
             outfit.shopping_links = create_search_links(
                 outfit,
@@ -78,42 +107,64 @@ async def generate_options(
 
         return {
             "status": "success",
-            "message": "Outfit options generated",
+            "message": (
+                "Business Formal and Smart Casual "
+                "outfit options generated"
+            ),
             "user_image_path": image_path,
             "data": recommendations,
         }
 
-    except Exception as e:
+    except Exception as exc:
         print(
-            f"[ERROR] Recommendation failed: {str(e)}",
+            f"[ERROR] Recommendation failed: {str(exc)}"
         )
 
         return JSONResponse(
             status_code=500,
             content={
                 "status": "failed",
-                "message": "Unable to generate outfit options",
-                "error": str(e),
+                "message": (
+                    "Unable to generate outfit options"
+                ),
+                "error": str(exc),
             },
         )
 
 
-@router.post("/regenerate", response_model=None)
+@router.post(
+    "/regenerate",
+    response_model=None,
+)
 async def regenerate_options(
     request: RegenerateRequest,
 ) -> Any:
+
     try:
-        print("[INFO] Regenerating recommendations")
+        if not os.path.isfile(
+            request.user_image_path
+        ):
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "status": "failed",
+                    "message": (
+                        "User image was not found"
+                    ),
+                },
+            )
+
+        print(
+            "[INFO] Regenerating Function 1 recommendations"
+        )
 
         user_profile = analyze_user_image(
             request.user_image_path,
         )
 
-        wardrobe_data = list_wardrobe()
-
+        # No wardrobe.
         recommendations = generate_style_recommendation(
             user_profile,
-            wardrobe_data,
         )
 
         for outfit in recommendations.recommendations:
@@ -123,60 +174,70 @@ async def regenerate_options(
 
         return {
             "status": "success",
-            "message": "New recommendations generated",
+            "message": (
+                "New Business Formal and Smart Casual "
+                "recommendations generated"
+            ),
             "user_image_path": request.user_image_path,
             "data": recommendations,
         }
 
-    except Exception as e:
+    except Exception as exc:
         print(
-            f"[ERROR] Regeneration failed: {str(e)}",
+            f"[ERROR] Regeneration failed: {str(exc)}"
         )
 
         return JSONResponse(
             status_code=500,
             content={
                 "status": "failed",
-                "message": "Unable to regenerate recommendations",
-                "error": str(e),
+                "message": (
+                    "Unable to regenerate recommendations"
+                ),
+                "error": str(exc),
             },
         )
 
 
-@router.post("/regenerate-one", response_model=None)
+@router.post(
+    "/regenerate-one",
+    response_model=None,
+)
 async def regenerate_one_option(
     request: RegenerateOneRequest,
 ) -> Any:
+
     try:
+        _validate_category(
+            request.category
+        )
+
+        if not os.path.isfile(
+            request.user_image_path
+        ):
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "status": "failed",
+                    "message": (
+                        "User image was not found"
+                    ),
+                },
+            )
+
         print(
-            f"[INFO] Regenerating category: {request.category}",
+            f"[INFO] Regenerating category: "
+            f"{request.category}"
         )
 
         user_profile = analyze_user_image(
             request.user_image_path,
         )
 
-        wardrobe_data = list_wardrobe()
-
-        # Generate only the requested category.
+        # No wardrobe.
         recommendation = generate_style_recommendation(
             user_profile,
-            wardrobe_data,
             category=request.category,
-        )
-
-        print(
-            f">>> Stylist returned "
-            f"{len(recommendation.recommendations)} "
-            f"recommendation(s)"
-        )
-
-        print(
-            f">>> Generated categories: "
-            f"{[
-                outfit.category
-                for outfit in recommendation.recommendations
-            ]}"
         )
 
         if not recommendation.recommendations:
@@ -184,11 +245,15 @@ async def regenerate_one_option(
                 status_code=500,
                 content={
                     "status": "failed",
-                    "message": "No outfit recommendation generated",
+                    "message": (
+                        "No outfit recommendation generated"
+                    ),
                 },
             )
 
-        selected = recommendation.recommendations[0]
+        selected = (
+            recommendation.recommendations[0]
+        )
 
         selected.shopping_links = create_search_links(
             selected,
@@ -197,15 +262,25 @@ async def regenerate_one_option(
         return {
             "status": "success",
             "message": (
-                f"{request.category} recommendation regenerated"
+                f"{request.category} "
+                "recommendation regenerated"
             ),
             "recommendation": selected,
         }
 
-    except Exception as e:
+    except ValueError as exc:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "status": "failed",
+                "message": str(exc),
+            },
+        )
+
+    except Exception as exc:
         print(
-            "[ERROR] Single recommendation regeneration failed: "
-            f"{str(e)}"
+            "[ERROR] Single recommendation "
+            f"regeneration failed: {str(exc)}"
         )
 
         return JSONResponse(
@@ -215,6 +290,6 @@ async def regenerate_one_option(
                 "message": (
                     "Unable to regenerate recommendation"
                 ),
-                "error": str(e),
+                "error": str(exc),
             },
         )

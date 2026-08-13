@@ -11,9 +11,9 @@ from app.routers import recommendation
 from app.routers import image_generation
 
 
-# =====================================================
-# Ensure required folders exist
-# =====================================================
+# ============================================================
+# REQUIRED DIRECTORIES
+# ============================================================
 
 os.makedirs(
     "outputs",
@@ -30,10 +30,15 @@ os.makedirs(
     exist_ok=True,
 )
 
+os.makedirs(
+    "uploads",
+    exist_ok=True,
+)
 
-# =====================================================
-# FastAPI application
-# =====================================================
+
+# ============================================================
+# FASTAPI APPLICATION
+# ============================================================
 
 app = FastAPI(
     title="AI Styling Agent API",
@@ -41,9 +46,9 @@ app = FastAPI(
 )
 
 
-# =====================================================
+# ============================================================
 # CORS
-# =====================================================
+# ============================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,12 +59,10 @@ app.add_middleware(
 )
 
 
-# =====================================================
-# Generated outfit images
-# =====================================================
+# ============================================================
+# STATIC FILES
+# ============================================================
 
-# New clean URL:
-# http://<PC-IP>:8000/images/<filename>.png
 app.mount(
     "/images",
     StaticFiles(
@@ -68,9 +71,6 @@ app.mount(
     name="images",
 )
 
-
-# Keep the existing /outputs route as well.
-# This prevents breaking anything that already uses it.
 app.mount(
     "/outputs",
     StaticFiles(
@@ -78,11 +78,6 @@ app.mount(
     ),
     name="outputs",
 )
-
-
-# =====================================================
-# Wardrobe clothing images
-# =====================================================
 
 app.mount(
     "/clothes",
@@ -93,9 +88,9 @@ app.mount(
 )
 
 
-# =====================================================
-# Routers
-# =====================================================
+# ============================================================
+# ROUTERS
+# ============================================================
 
 app.include_router(
     health.router,
@@ -118,12 +113,18 @@ app.include_router(
 )
 
 
-# =====================================================
-# Root endpoint
-# =====================================================
+# ============================================================
+# ROOT ENDPOINT
+# ============================================================
 
 @app.get("/")
 def home() -> dict[str, str]:
     return {
         "message": "AI Styling Agent API running",
+        "function_1": (
+            "AI-generated Business Formal and Smart Casual outfits"
+        ),
+        "function_2": (
+            "Personal and Commercial Wardrobe - coming next"
+        ),
     }

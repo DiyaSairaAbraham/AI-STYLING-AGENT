@@ -26,10 +26,13 @@ async def generate_selected_outfit(
     try:
         print("[INFO] Generating selected outfit image")
 
-        if not os.path.exists(request.user_image_path):
+        if not os.path.isfile(request.user_image_path):
             raise HTTPException(
                 status_code=400,
-                detail=f"Image not found: {request.user_image_path}",
+                detail=(
+                    f"User image not found: "
+                    f"{request.user_image_path}"
+                ),
             )
 
         output_dir = os.path.join(
@@ -42,7 +45,9 @@ async def generate_selected_outfit(
             exist_ok=True,
         )
 
-        image_name = f"outfit_{uuid.uuid4().hex}.png"
+        image_name = (
+            f"outfit_{uuid.uuid4().hex}.png"
+        )
 
         output_path = os.path.join(
             output_dir,
@@ -55,15 +60,18 @@ async def generate_selected_outfit(
             output_path=output_path,
         )
 
-        # Convert the local filesystem path into a URL
-        # served by FastAPI's /images/ static route.
-        image_filename = os.path.basename(image_path)
+        image_filename = os.path.basename(
+            image_path
+        )
 
-        image_url = str(
-            http_request.base_url
-        ).rstrip("/") + f"/images/{image_filename}"
+        image_url = (
+            str(http_request.base_url).rstrip("/")
+            + f"/images/{image_filename}"
+        )
 
-        print(f"[INFO] Image URL: {image_url}")
+        print(
+            f"[INFO] Image URL: {image_url}"
+        )
 
         return {
             "status": "success",
@@ -74,12 +82,17 @@ async def generate_selected_outfit(
     except HTTPException:
         raise
 
-    except Exception as e:
+    except Exception as exc:
         print(
-            f"[ERROR] Image generation failed: {e}",
+            "[ERROR] Image generation failed: "
+            f"{exc}"
         )
 
         raise HTTPException(
             status_code=500,
-            detail=str(e),
-        ) from e
+            detail={
+                "status": "failed",
+                "message": "Image generation failed",
+                "error": str(exc),
+            },
+        ) from exc
