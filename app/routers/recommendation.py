@@ -10,7 +10,15 @@ from agents.shopping_agent import create_search_links
 from agents.stylist_agent import generate_style_recommendation
 from agents.vision_agent import analyze_user_image
 from utils.wardrobe_manager import list_wardrobe
+from utils.commercial_wardrobe_manager import (
+    list_commercial_wardrobe
+)
+from fastapi import Form
 
+class RecommendationRequest(BaseModel):
+    user_image_path: str
+    style_type: str
+    wardrobe_source: str
 
 class RegenerateRequest(BaseModel):
     user_image_path: str
@@ -32,46 +40,44 @@ UPLOAD_DIR = "uploads"
 
 @router.post("/options", response_model=None)
 async def generate_options(
-    user_image: UploadFile = File(...),
+    request: RecommendationRequest,
 ) -> Any:
+
     try:
-        os.makedirs(
-            UPLOAD_DIR,
-            exist_ok=True,
+
+        print("[INFO] Running recommendation flow")
+
+        user_profile = analyze_user_image(
+            request.user_image_path,
+            request.style_type,
         )
 
-        filename = user_image.filename or "user_image.jpg"
+        if request.wardrobe_source == "personal":
 
-        image_path = os.path.join(
-            UPLOAD_DIR,
-            filename,
-        )
+            wardrobe_data = list_wardrobe()
 
-        # Save uploaded image.
-        with open(image_path, "wb") as buffer:
-            shutil.copyfileobj(
-                user_image.file,
-                buffer,
+        elif request.wardrobe_source == "commercial":
+
+            wardrobe_data = list_commercial_wardrobe()
+
+        else:
+
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "status": "failed",
+                    "message": "Invalid wardrobe source"
+                }
             )
 
-        print("[INFO] Running fast recommendation flow")
-
-        # Module 1: Vision Agent.
-        user_profile = analyze_user_image(
-            image_path,
-        )
-
-        # Module 2: Load wardrobe database.
-        wardrobe_data = list_wardrobe()
-
-        # Module 3: Stylist Agent.
         recommendations = generate_style_recommendation(
             user_profile,
             wardrobe_data,
+            request.style_type,
         )
 
-        # Module 4: Shopping Agent.
         for outfit in recommendations.recommendations:
+
             outfit.shopping_links = create_search_links(
                 outfit,
             )
@@ -79,11 +85,12 @@ async def generate_options(
         return {
             "status": "success",
             "message": "Outfit options generated",
-            "user_image_path": image_path,
+            "user_image_path": request.user_image_path,
             "data": recommendations,
         }
 
     except Exception as e:
+
         print(
             f"[ERROR] Recommendation failed: {str(e)}",
         )

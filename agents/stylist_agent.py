@@ -16,6 +16,7 @@ client = OpenAI(
 def generate_style_recommendation(
     module1_data,
     wardrobe_items: list,
+    style_type: str,
     category=None
 ):
     log(
@@ -53,25 +54,28 @@ def generate_style_recommendation(
     )
 
     if category is None:
-        category_instruction = """
-Create EXACTLY 3 outfit recommendations.
 
-Categories:
+        if style_type.lower() == "formal":
 
-1. Business Formal
-2. Smart Casual
-3. Weekend Casual
-"""
-    else:
-        category_instruction = f"""
-Create EXACTLY ONE outfit recommendation.
+            category_instruction = """
+    Create EXACTLY 2 outfit recommendations.
 
-Category:
+    Categories:
 
-{category}
+    1. Business Formal
+    2. Smart Business
+    """
 
-Do NOT generate any other categories.
-"""
+        else:
+
+            category_instruction = """
+    Create EXACTLY 2 outfit recommendations.
+
+    Categories:
+
+    1. Smart Casual
+    2. Weekend Casual
+    """
 
     context_prompt = f"""
 You are a professional fashion stylist AI.
@@ -82,6 +86,10 @@ You will be given:
 2. Complete wardrobe database from Module 2.
 
 TASK:
+
+Selected Style:
+
+{style_type.upper()}
 
 {category_instruction}
 

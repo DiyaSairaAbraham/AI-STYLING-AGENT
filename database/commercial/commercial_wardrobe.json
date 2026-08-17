@@ -1,0 +1,431 @@
+[
+    {
+        "id_baju": "commercial_bag13",
+        "image_path": "/commercial/commercial_bag13.jpg",
+        "category": "Accessories",
+        "sub_category": "Shoulder bag",
+        "color": "Brown",
+        "material": "Crochet knit yarn with metal buckle detail",
+        "fit": "N/A",
+        "style": "Bohemian / artisanal",
+        "pattern": "Open-weave crochet texture",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Casual outings",
+            "Beach trips",
+            "Vacation",
+            "Brunch",
+            "Summer events",
+            "Weekend wear"
+        ]
+    },
+    {
+        "id_baju": "commercial_bag14",
+        "image_path": "/commercial/commercial_bag14.jpg",
+        "category": "Accessories",
+        "sub_category": "Mini tote bag with shoulder strap",
+        "color": "Light sage green, mustard yellow, black, and white",
+        "material": "Textured woven synthetic fabric with faux leather or coated handles/strap",
+        "fit": "Structured compact silhouette",
+        "style": "Modern casual colorblock mini tote/crossbody bag",
+        "pattern": "Colorblock with vertical stripe accents",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "casual outings",
+            "daily errands",
+            "weekend wear",
+            "shopping",
+            "travel",
+            "brunch"
+        ]
+    },
+    {
+        "id_baju": "commercial_dress1",
+        "image_path": "/commercial/commercial_dress1.jpg",
+        "category": "dress",
+        "sub_category": "spaghetti-strap high-low maxi sundress",
+        "color": "peach pink with green and brown tropical print",
+        "material": "lightweight woven fabric, likely viscose or chiffon",
+        "fit": "loose, flowy, relaxed fit",
+        "style": "bohemian, resort, tropical summer style",
+        "pattern": "tropical palm print",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "beach vacation",
+            "resort wear",
+            "summer outing",
+            "casual daytime event",
+            "poolside gathering"
+        ]
+    },
+    {
+        "id_baju": "commercial_dress2",
+        "image_path": "/commercial/commercial_dress2.jpg",
+        "category": "Dress",
+        "sub_category": "Tie-strap midi sundress",
+        "color": "Blue with white and beige accents",
+        "material": "Lightweight cotton or cotton-blend",
+        "fit": "Relaxed, flowy fit with gathered waist",
+        "style": "Bohemian summer sundress",
+        "pattern": "Floral print with border hem",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Beach outing",
+            "Vacation",
+            "Casual daytime wear",
+            "Summer picnic",
+            "Resort wear"
+        ]
+    },
+    {
+        "id_baju": "commercial_dress3",
+        "image_path": "/commercial/commercial_dress3.jpg",
+        "category": "bottoms",
+        "sub_category": "maxi skirt",
+        "color": "pink, cream, red, yellow, multicolor",
+        "material": "lightweight woven fabric, likely viscose or rayon",
+        "fit": "relaxed, flowy fit",
+        "style": "feminine, bohemian, tropical-inspired",
+        "pattern": "bold floral print",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "casual outings",
+            "vacation",
+            "beach resort",
+            "brunch",
+            "summer events",
+            "daytime wear"
+        ]
+    },
+    {
+        "id_baju": "commercial_jacket10",
+        "image_path": "/commercial/commercial_jacket10.jpg",
+        "category": "Outerwear",
+        "sub_category": "Blazer",
+        "color": "Dark olive brown",
+        "material": "Wool or wool-blend textured fabric",
+        "fit": "Regular fit",
+        "style": "Classic tailored blazer jacket",
+        "pattern": "Solid",
+        "formality_level": "Smart casual",
+        "suitable_occasions": [
+            "Work",
+            "Business casual",
+            "Smart casual outings",
+            "Dinner",
+            "Fall or winter everyday wear"
+        ]
+    },
+    {
+        "id_baju": "commercial_jacket21",
+        "image_path": "/commercial/commercial_jacket21.jpeg",
+        "category": "top",
+        "sub_category": "crewneck sweatshirt",
+        "color": "black",
+        "material": "cotton fleece or cotton-blend sweatshirt fabric",
+        "fit": "relaxed oversized fit",
+        "style": "minimalist streetwear",
+        "pattern": "solid with small chest logo",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "casual wear",
+            "everyday wear",
+            "streetwear",
+            "lounging",
+            "weekend outings",
+            "travel"
+        ]
+    },
+    {
+        "id_baju": "commercial_jacket22",
+        "image_path": "/commercial/commercial_jacket22.jpeg",
+        "category": "Outerwear",
+        "sub_category": "zip-up hoodie",
+        "color": "camel brown",
+        "material": "cotton-blend fleece",
+        "fit": "relaxed",
+        "style": "minimalist casual streetwear",
+        "pattern": "solid",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "casual outings",
+            "lounging",
+            "travel",
+            "weekend wear",
+            "layering in cool weather"
+        ]
+    },
+    {
+        "id_baju": "commercial_jacket9",
+        "image_path": "/commercial/commercial_jacket9.jpg",
+        "category": "outerwear",
+        "sub_category": "double-breasted blazer",
+        "color": "dark burgundy",
+        "material": "wool blend or suiting fabric",
+        "fit": "relaxed tailored fit",
+        "style": "classic tailored minimalist",
+        "pattern": "solid",
+        "formality_level": "formal",
+        "suitable_occasions": [
+            "business meetings",
+            "formal events",
+            "office wear",
+            "smart casual outings",
+            "evening occasions"
+        ]
+    },
+    {
+        "id_baju": "commercial_pant6",
+        "image_path": "/commercial/commercial_pant6.jpg",
+        "category": "bottoms",
+        "sub_category": "wide-leg drawstring pants",
+        "color": "beige",
+        "material": "lightweight woven fabric",
+        "fit": "relaxed wide-leg",
+        "style": "minimalist casual",
+        "pattern": "solid",
+        "formality_level": "casual to smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "everyday wear",
+            "travel",
+            "loungewear",
+            "brunch"
+        ]
+    },
+    {
+        "id_baju": "commercial_pant7",
+        "image_path": "/commercial/commercial_pant7.jpg",
+        "category": "bottoms",
+        "sub_category": "pleated trousers",
+        "color": "black",
+        "material": "woven wool-blend or polyester-blend suiting fabric",
+        "fit": "relaxed straight fit",
+        "style": "tailored minimalist dress pants",
+        "pattern": "solid",
+        "formality_level": "formal",
+        "suitable_occasions": [
+            "business",
+            "office",
+            "formal events",
+            "semi-formal occasions",
+            "smart casual"
+        ]
+    },
+    {
+        "id_baju": "commercial_pant8",
+        "image_path": "/commercial/commercial_pant8.jpg",
+        "category": "bottoms",
+        "sub_category": "trousers",
+        "color": "gray",
+        "material": "woven wool-blend or suiting fabric",
+        "fit": "wide-leg, relaxed fit",
+        "style": "tailored classic",
+        "pattern": "subtle plaid/check",
+        "formality_level": "business casual",
+        "suitable_occasions": [
+            "office",
+            "business casual",
+            "smart casual",
+            "meetings",
+            "semi-formal events"
+        ]
+    },
+    {
+        "id_baju": "commercial_pants19",
+        "image_path": "/commercial/commercial_pants19.jpeg",
+        "category": "bottoms",
+        "sub_category": "jeans",
+        "color": "medium indigo blue",
+        "material": "cotton denim",
+        "fit": "relaxed straight fit",
+        "style": "casual, minimalist, workwear-inspired",
+        "pattern": "solid denim wash",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "everyday wear",
+            "casual outings",
+            "weekend activities",
+            "streetwear looks",
+            "travel",
+            "errands",
+            "smart casual styling"
+        ]
+    },
+    {
+        "id_baju": "commercial_shirt15",
+        "image_path": "/commercial/commercial_shirt15.jpeg",
+        "category": "top",
+        "sub_category": "short-sleeve button-up shirt",
+        "color": "mint green with white stripes",
+        "material": "cotton or cotton-blend woven fabric",
+        "fit": "relaxed cropped fit",
+        "style": "preppy minimalist casual",
+        "pattern": "vertical stripes",
+        "formality_level": "smart casual",
+        "suitable_occasions": [
+            "casual outing",
+            "smart casual event",
+            "summer wear",
+            "brunch",
+            "vacation",
+            "weekend wear"
+        ]
+    },
+    {
+        "id_baju": "commercial_shirt16",
+        "image_path": "/commercial/commercial_shirt16.jpeg",
+        "category": "Top",
+        "sub_category": "Short-sleeve polo shirt",
+        "color": "White with blue trim",
+        "material": "Cotton pique knit",
+        "fit": "Relaxed fit",
+        "style": "Minimal classic polo",
+        "pattern": "Solid with contrast piping",
+        "formality_level": "Smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "smart casual events",
+            "weekend wear",
+            "summer wear",
+            "golf or tennis",
+            "resort casual"
+        ]
+    },
+    {
+        "id_baju": "commercial_shirt17",
+        "image_path": "/commercial/commercial_shirt17.jpeg",
+        "category": "tops",
+        "sub_category": "short-sleeve camp collar button-up shirt",
+        "color": "light beige / cream",
+        "material": "lightweight woven cotton or cotton blend",
+        "fit": "relaxed, boxy fit",
+        "style": "minimalist, casual, resort-inspired",
+        "pattern": "solid / plain",
+        "formality_level": "casual to smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "summer wear",
+            "vacation",
+            "resort wear",
+            "beach outings",
+            "weekend wear",
+            "smart casual gatherings"
+        ]
+    },
+    {
+        "id_baju": "commercial_shirt18",
+        "image_path": "/commercial/commercial_shirt18.jpeg",
+        "category": "tops",
+        "sub_category": "short-sleeve polo shirt",
+        "color": "navy blue with burgundy contrast collar and placket",
+        "material": "knitted cotton or cotton-blend",
+        "fit": "regular fit",
+        "style": "preppy casual polo style",
+        "pattern": "solid with contrast color-block details",
+        "formality_level": "smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "smart casual events",
+            "weekend wear",
+            "casual office",
+            "lunch or coffee meetups"
+        ]
+    },
+    {
+        "id_baju": "commercial_shirt20",
+        "image_path": "/commercial/commercial_shirt20.jpeg",
+        "category": "top",
+        "sub_category": "long-sleeve button-down shirt",
+        "color": "light blue",
+        "material": "cotton oxford",
+        "fit": "regular fit",
+        "style": "classic preppy button-down",
+        "pattern": "fine vertical stripes",
+        "formality_level": "smart casual",
+        "suitable_occasions": [
+            "business casual",
+            "office",
+            "smart casual outings",
+            "semi-formal daytime events",
+            "casual gatherings"
+        ]
+    },
+    {
+        "id_baju": "commercial_shirt4",
+        "image_path": "/commercial/commercial_shirt4.jpg",
+        "category": "Top",
+        "sub_category": "Long-sleeve collared shirt",
+        "color": "Blue and white",
+        "material": "Cotton or cotton-blend poplin",
+        "fit": "Relaxed / oversized",
+        "style": "Classic button-up shirt",
+        "pattern": "Vertical stripes",
+        "formality_level": "Smart casual",
+        "suitable_occasions": [
+            "Casual outings",
+            "Smart casual events",
+            "Office wear",
+            "Weekend wear",
+            "Brunch"
+        ]
+    },
+    {
+        "id_baju": "commercial_shirt5",
+        "image_path": "/commercial/commercial_shirt5.jpg",
+        "category": "Top",
+        "sub_category": "Button-up flannel shirt",
+        "color": "Rust orange, navy, cream, and gray",
+        "material": "Cotton flannel",
+        "fit": "Relaxed fit",
+        "style": "Casual workwear / heritage",
+        "pattern": "Plaid check",
+        "formality_level": "Casual",
+        "suitable_occasions": [
+            "Everyday casual wear",
+            "Weekend outings",
+            "Layering",
+            "School",
+            "Outdoor casual activities"
+        ]
+    },
+    {
+        "id_baju": "commercial_shoes11",
+        "image_path": "/commercial/commercial_shoes11.jpg",
+        "category": "footwear",
+        "sub_category": "platform heeled sandals",
+        "color": "dusty rose pink",
+        "material": "leather or faux leather upper with synthetic sole",
+        "fit": "regular fit with adjustable ankle strap",
+        "style": "feminine retro platform block-heel",
+        "pattern": "solid",
+        "formality_level": "smart casual",
+        "suitable_occasions": [
+            "casual outings",
+            "brunch",
+            "date night",
+            "summer events",
+            "parties",
+            "smart casual gatherings"
+        ]
+    },
+    {
+        "id_baju": "commercial_shoes12",
+        "image_path": "/commercial/commercial_shoes12.jpg",
+        "category": "footwear",
+        "sub_category": "loafers",
+        "color": "dark brown",
+        "material": "leather",
+        "fit": "regular",
+        "style": "classic penny loafer",
+        "pattern": "solid",
+        "formality_level": "smart casual",
+        "suitable_occasions": [
+            "business casual",
+            "office wear",
+            "smart casual events",
+            "semi-formal gatherings",
+            "dinner outings"
+        ]
+    }
+]

@@ -62,6 +62,7 @@ class Module1Output(BaseModel):
 
     analysis: OutfitAnalysis
 
+    comments: str
 
 
 # =====================================================
@@ -160,7 +161,7 @@ class Module3Output(BaseModel):
 
     recommendations: List[OutfitRecommendation] = Field(
         description=
-        "Exactly 3 outfit recommendations"
+        "2 outfit recommendations"
     )
 
 

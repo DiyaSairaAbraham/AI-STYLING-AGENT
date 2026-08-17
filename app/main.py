@@ -10,7 +10,7 @@ from app.routers import wardrobe
 from app.routers import recommendation
 from app.routers import image_generation
 
-
+from app.routers import commercial
 # =====================================================
 # Ensure required folders exist
 # =====================================================
@@ -92,6 +92,13 @@ app.mount(
     name="clothes",
 )
 
+app.mount(
+    "/commercial-images",
+    StaticFiles(
+        directory="database/commercial",
+    ),
+    name="commercial-images",
+)
 
 # =====================================================
 # Routers
@@ -117,6 +124,9 @@ app.include_router(
     image_generation.router,
 )
 
+app.include_router(
+    commercial.router,
+)
 
 # =====================================================
 # Root endpoint

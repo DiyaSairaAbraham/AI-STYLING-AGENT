@@ -11,10 +11,25 @@ client = OpenAI(
 )
 
 
-VISION_PROMPT = """
+
+
+
+def analyze_user_image(
+        image_path: str,
+        style_type: str
+) -> Module1Output:
+
+
+    log("Running Vision Agent (Module 1)")
+
+    prompt = f"""
 You are a top-tier fashion stylist and visual analyst.
 
-Analyze the user's full-body image carefully.
+The user selected this style:
+
+{style_type.upper()}
+
+Analyze the user's image according to this selected style.
 
 Return structured JSON ONLY with:
 
@@ -35,17 +50,9 @@ Return structured JSON ONLY with:
 - 2 advantages
 - 2 areas for improvement
 
-Be precise and consistent.
+4. comments:
+A short styling recommendation based on the selected style.
 """
-
-
-def analyze_user_image(
-        image_path: str
-) -> Module1Output:
-
-
-    log("Running Vision Agent (Module 1)")
-
 
     base64_image = encode_image(
         image_path
@@ -63,7 +70,7 @@ def analyze_user_image(
 
                     {
                         "type":"text",
-                        "text":VISION_PROMPT
+                        "text":prompt
                     },
 
                     {

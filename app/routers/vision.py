@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 import shutil
 import os
 
@@ -16,7 +16,8 @@ UPLOAD_DIR = "uploads"
 
 @router.post("/analyze")
 async def analyze_image(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    style_type: str = Form(...)
 ):
 
     try:
@@ -66,7 +67,8 @@ async def analyze_image(
 
 
         result = analyze_user_image(
-            image_path
+        image_path=image_path,
+        style_type=style_type
         )
 
 

@@ -41,6 +41,12 @@ DATABASE_DIR = BASE_DIR / "database"
 WARDROBE_DIR = DATABASE_DIR / "wardrobe"
 CACHE_DIR = DATABASE_DIR / "cache"
 
+COMMERCIAL_DIR = DATABASE_DIR / "commercial"
+
+COMMERCIAL_WARDROBE_FILE = (
+    COMMERCIAL_DIR / "commercial_wardrobe.json"
+)
+
 WARDROBE_FILE = WARDROBE_DIR / "wardrobe.json"
 CACHE_FILE = CACHE_DIR / "user_profile.json"
 
@@ -74,6 +80,11 @@ WARDROBE_DIR.mkdir(
 )
 
 CACHE_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
+COMMERCIAL_DIR.mkdir(
     parents=True,
     exist_ok=True
 )
