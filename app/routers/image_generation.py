@@ -6,7 +6,7 @@ from fastapi import (
     HTTPException,
     Request,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from agents.image_agent import (
     generate_outfit_image,
@@ -20,9 +20,10 @@ router = APIRouter(
 
 
 class ImageGenerationRequest(BaseModel):
-    prompt: str
-    user_image_path: str
-    wardrobe_image_paths: list[str] = []
+    prompt: str = Field(..., description="The prompt for image generation")
+    user_image_path: str = Field(..., description="Path to the user's image")
+    wardrobe_image_paths: list[str] =  Field(default_factory=list)
+
 
 
 @router.post(

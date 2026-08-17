@@ -1,704 +1,432 @@
 import 'package:flutter/material.dart';
 
-import '../models/recommendation.dart';
 import '../services/api_service.dart';
 import 'outfit_result_screen.dart';
 
 class OptionsScreen extends StatefulWidget {
-final Map<String, dynamic> optionsData;
+  final String userImagePath;
 
-const OptionsScreen({
-super.key,
-required this.optionsData,
-});
-
-@override
-State<OptionsScreen> createState() => _OptionsScreenState();
-}
-
-class _OptionsScreenState extends State<OptionsScreen> {
-final ApiService _apiService = ApiService();
-
-List<dynamic> recommendations = <dynamic>[];
-
-bool _loading = false;
-String _loadingMessage = '';
-
-final Set<int> _refreshingIndexes = <int>{};
-
-@override
-void initState() {
-super.initState();
-
-
-final data = widget.optionsData['data'];
-
-if (data is Map<String, dynamic> &&
-    data['recommendations'] is List) {
-  recommendations = List<dynamic>.from(
-    data['recommendations'] as List,
-  );
-}
-
-
-}
-
-Future<void> _generateOutfit(
-Map<String, dynamic> outfit,
-) async {
-if (_loading) {
-return;
-}
-
-
-setState(() {
-  _loading = true;
-  _loadingMessage = 'Creating your outfit image...';
-});
-
-try {
-  final prompt = outfit['image_generation_prompt'];
-
-  if (prompt == null || prompt.toString().isEmpty) {
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _loading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Image generation prompt is missing',
-        ),
-      ),
-    );
-
-    return;
-  }
-
-  final userImagePath =
-      widget.optionsData['user_image_path'];
-
-  if (userImagePath == null ||
-      userImagePath.toString().isEmpty) {
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _loading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'User image path is missing',
-        ),
-      ),
-    );
-
-    return;
-  }
-
-  final result =
-      await _apiService.generateSelectedOutfit(
-    prompt: prompt.toString(),
-    userImagePath: userImagePath.toString(),
-  );
-
-  if (!mounted) {
-    return;
-  }
-
-  setState(() {
-    _loading = false;
+  const OptionsScreen({
+    super.key,
+    required this.userImagePath,
   });
 
-  if (result == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Failed to generate outfit image',
-        ),
-      ),
-    );
-
-    return;
-  }
-
-  final imageUrl = result['image_url'];
-
-debugPrint("GENERATED IMAGE URL: $imageUrl");
-
-if (imageUrl == null ||imageUrl.toString().trim().isEmpty)  {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Image URL not received'),
-    ),
-  );
-
-  return;
+  @override
+  State<OptionsScreen> createState() =>
+      _OptionsScreenState();
 }
 
-Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => OutfitResultScreen(
-      imageUrl: imageUrl.toString(),
-      recommendation: Recommendation.fromJson(outfit),
-    ),
-  ),
-);
-} catch (e) {
-  if (!mounted) {
-    return;
-  }
+class _OptionsScreenState
+    extends State<OptionsScreen> {
+  final ApiService _api = ApiService();
 
-  setState(() {
-    _loading = false;
-  });
+  bool _loading = false;
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'Failed to generate outfit image: $e',
-      ),
-    ),
-  );
-}
-
-
-}
-
-Future<void> _regenerateRecommendations() async {
-if (_loading) {
-return;
-}
-
-
-setState(() {
-  _loading = true;
-  _loadingMessage =
-      'Generating new outfit recommendations...';
-});
-
-try {
-  final userImagePath =
-      widget.optionsData['user_image_path'];
-
-  if (userImagePath == null ||
-      userImagePath.toString().isEmpty) {
-    if (!mounted) {
-      return;
-    }
-
+  Future<void> _generateAiStyle() async {
     setState(() {
-      _loading = false;
+      _loading = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'User image path is missing',
-        ),
-      ),
-    );
-
-    return;
-  }
-
-  final result =
-      await _apiService.regenerateRecommendations(
-    userImagePath.toString(),
-  );
-
-  if (!mounted) {
-    return;
-  }
-
-  final data = result?['data'];
-
-  if (data is Map<String, dynamic> &&
-      data['recommendations'] is List) {
-    setState(() {
-      recommendations = List<dynamic>.from(
-        data['recommendations'] as List,
+    try {
+      final result = await _api.generateAiStyle(
+        widget.userImagePath,
       );
-      _loading = false;
-    });
-  } else {
-    setState(() {
-      _loading = false;
-    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Failed to regenerate recommendations',
-        ),
-      ),
-    );
-  }
-} catch (e) {
-  if (!mounted) {
-    return;
-  }
+      if (!mounted) {
+        return;
+      }
 
-  setState(() {
-    _loading = false;
-  });
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'Failed to regenerate recommendations: $e',
-      ),
-    ),
-  );
-}
-
-}
-
-Future<void> _regenerateOneRecommendation(
-int index,
-) async {
-if (_loading ||
-_refreshingIndexes.contains(index)) {
-return;
-}
-
-
-if (index < 0 ||
-    index >= recommendations.length) {
-  return;
-}
-
-final rawOutfit = recommendations[index];
-
-if (rawOutfit is! Map) {
-  return;
-}
-
-final outfit =
-    Map<String, dynamic>.from(rawOutfit);
-
-final category =
-    outfit['category']?.toString();
-
-if (category == null || category.isEmpty) {
-  if (!mounted) {
-    return;
-  }
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text(
-        'Outfit category is missing',
-      ),
-    ),
-  );
-
-  return;
-}
-
-final userImagePath =
-    widget.optionsData['user_image_path'];
-
-if (userImagePath == null ||
-    userImagePath.toString().isEmpty) {
-  if (!mounted) {
-    return;
-  }
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text(
-        'User image path is missing',
-      ),
-    ),
-  );
-
-  return;
-}
-
-setState(() {
-  _refreshingIndexes.add(index);
-});
-
-try {
-  final result =
-      await _apiService.regenerateOneRecommendation(
-    userImagePath: userImagePath.toString(),
-    category: category,
-  );
-
-  if (!mounted) {
-    return;
-  }
-
-  if (result != null &&
-      result['recommendation'] != null) {
-    final newRecommendation =
-        result['recommendation'];
-
-    if (newRecommendation is Map) {
-      setState(() {
-        recommendations[index] =
-            Map<String, dynamic>.from(
-          newRecommendation,
-        );
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Invalid recommendation received',
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OutfitResultScreen(
+            result: result,
+            functionName: 'AI Styling',
           ),
         ),
       );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _showError(error.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Failed to regenerate recommendation',
+  }
+
+  Future<void> _generateWardrobeStyle(
+    String source,
+  ) async {
+    setState(() {
+      _loading = true;
+    });
+
+    try {
+      final result =
+          await _api.generateWardrobeStyle(
+        userImagePath: widget.userImagePath,
+        wardrobeSource: source,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OutfitResultScreen(
+            result: result,
+            functionName:
+                source == 'personal'
+                    ? 'Personal Wardrobe'
+                    : 'Commercial Wardrobe',
+          ),
         ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _showError(error.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message.replaceFirst(
+            'Exception: ',
+            '',
+          ),
+        ),
+        backgroundColor: Colors.redAccent,
       ),
     );
   }
-} catch (e) {
-  if (!mounted) {
-    return;
-  }
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'Failed to regenerate recommendation: $e',
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F5F0),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor:
+            const Color(0xFF2F2924),
+        title: const Text(
+          'Choose a Function',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
-    ),
-  );
-} finally {
-  if (mounted) {
-    setState(() {
-      _refreshingIndexes.remove(index);
-    });
-  }
-}
-
-
-}
-
-@override
-Widget build(BuildContext context) {
-return Scaffold(
-appBar: AppBar(
-title: const Text(
-'Choose Your Outfit',
-),
-actions: [
-IconButton(
-tooltip:
-'Generate new outfit recommendations',
-icon: const Icon(
-Icons.refresh,
-),
-onPressed: _loading
-? null
-: _regenerateRecommendations,
-),
-],
-),
-body: Stack(
-children: [
-if (recommendations.isEmpty)
-const Center(
-child: Text(
-'No outfit recommendations available.',
-),
-)
-else
-ListView.builder(
-padding:
-const EdgeInsets.all(16),
-itemCount:
-recommendations.length,
-itemBuilder:
-(context, index) {
-final rawOutfit =
-recommendations[index];
-
-
-            if (rawOutfit is! Map) {
-              return const SizedBox.shrink();
-            }
-
-            final outfit =
-                Map<String, dynamic>.from(
-              rawOutfit,
-            );
-
-            final selectedItems =
-                outfit['selected_items']
-                        is List
-                    ? List<dynamic>.from(
-                        outfit[
-                            'selected_items'] as List,
-                      )
-                    : <dynamic>[];
-
-            final category =
-                outfit['category']
-                        ?.toString() ??
-                    'Outfit';
-
-            final stylingAdvice =
-                outfit['styling_advice']
-                        ?.toString() ??
-                    '';
-
-            final isRefreshing =
-                _refreshingIndexes
-                    .contains(index);
-
-            return Card(
-              elevation: 5,
-              margin:
-                  const EdgeInsets.only(
-                bottom: 20,
-              ),
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(
-                  15,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            22,
+            20,
+            22,
+            30,
+          ),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'What would you like\nto create?',
+                style: TextStyle(
+                  fontSize: 31,
+                  height: 1.05,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF2F2924),
                 ),
               ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.all(18),
+
+              const SizedBox(height: 12),
+
+              const Text(
+                'Choose how AI Personal Styling Consultant should create your look.',
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 1.45,
+                  color: Colors.black54,
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
-                      mainAxisAlignment:
-                          MainAxisAlignment
-                              .spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            category,
-                            style:
-                                const TextStyle(
-                              fontSize: 22,
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 8,
-                        ),
-                        AnimatedSwitcher(
-                          duration:
-                              const Duration(
-                            milliseconds: 250,
-                          ),
-                          transitionBuilder:
-                              (
-                            child,
-                            animation,
-                          ) {
-                            return FadeTransition(
-                              opacity:
-                                  animation,
-                              child: child,
-                            );
-                          },
-                          child:
-                              isRefreshing
-                                  ? Column(
-                                      key: const ValueKey(
-                                        'loading',
-                                      ),
-                                      mainAxisSize:
-                                          MainAxisSize
-                                              .min,
-                                      children: [
-                                        const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child:
-                                              CircularProgressIndicator(
-                                            strokeWidth:
-                                                2,
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 6,
-                                        ),
-                                        Text(
-                                          'Generating new\n$category outfit...',
-                                          textAlign:
-                                              TextAlign
-                                                  .center,
-                                          style:
-                                              const TextStyle(
-                                            fontSize:
-                                                11,
-                                            color:
-                                                Colors
-                                                    .grey,
-                                            fontStyle:
-                                                FontStyle
-                                                    .italic,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : Tooltip(
-                                      key: const ValueKey(
-                                        'button',
-                                      ),
-                                      message:
-                                          'Generate another $category outfit',
-                                      child:
-                                          IconButton(
-                                        icon:
-                                            const Icon(
-                                          Icons
-                                              .refresh,
-                                        ),
-                                        onPressed:
-                                            _loading
-                                                ? null
-                                                : () {
-                                                    _regenerateOneRecommendation(
-                                                      index,
-                                                    );
-                                                  },
-                                      ),
-                                    ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    const Text(
-                      'Selected Items',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight:
-                            FontWeight.bold,
+                    Expanded(
+                      child: _FunctionCard(
+                        icon:
+                            Icons.auto_awesome_rounded,
+                        title: 'Create My Look',
+                        description:
+                            'Let the AI stylist create a complete look for you.',
+                        onTap: _loading
+                            ? null
+                            : _generateAiStyle,
                       ),
                     ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    ...List.generate(
-                      selectedItems.length,
-                      (itemIndex) {
-                        final item =
-                            selectedItems[
-                                itemIndex];
 
-                        final description =
-                            item is Map
-                                ? item[
-                                            'description']
-                                        ?.toString() ??
-                                    'Item'
-                                : item
-                                    .toString();
+                    const SizedBox(height: 16),
 
-                        return Padding(
-                          padding:
-                              const EdgeInsets
-                                  .only(
-                            bottom: 6,
-                          ),
-                          child: Text(
-                            '• $description',
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Text(
-                      stylingAdvice,
-                      style:
-                          const TextStyle(
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    SizedBox(
-                      width:
-                          double.infinity,
-                      child:
-                          ElevatedButton(
-                        onPressed: _loading
+                    Expanded(
+                      child: _FunctionCard(
+                        icon:
+                            Icons.checkroom_rounded,
+                        title: 'Use a Wardrobe',
+                        description:
+                            'Create your look using a commercial or personal wardrobe.',
+                        onTap: _loading
                             ? null
                             : () {
-                                _generateOutfit(
-                                  outfit,
-                                );
+                                _showWardrobeChoice();
                               },
-                        child:
-                            const Text(
-                          'Generate This Outfit',
-                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            );
-          },
-        ),
-      if (_loading)
-        Container(
-          color: Colors.black54,
-          child: Center(
-            child: Column(
-              mainAxisSize:
-                  MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(
-                  height: 15,
-                ),
-                Text(
-                  _loadingMessage,
-                  textAlign:
-                      TextAlign.center,
-                  style:
-                      const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
+
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 20),
+                  child: Center(
+                    child:
+                        CircularProgressIndicator(),
                   ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWardrobeChoice() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFFF8F5F0),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(30),
+        ),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              22,
+              24,
+              22,
+              25,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Choose wardrobe',
+                  style: TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF2F2924),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                _WardrobeChoice(
+                  icon: Icons.storefront_outlined,
+                  title: 'Commercial Wardrobe',
+                  description:
+                      'Create a look using available commercial clothing.',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _generateWardrobeStyle(
+                      'commercial',
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 12),
+
+                _WardrobeChoice(
+                  icon: Icons.person_outline_rounded,
+                  title: 'Personal Wardrobe',
+                  description:
+                      'Create a look using your own wardrobe.',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _generateWardrobeStyle(
+                      'personal',
+                    );
+                  },
                 ),
               ],
             ),
           ),
-        ),
-    ],
-  ),
-);
-
-
+        );
+      },
+    );
+  }
 }
+
+class _FunctionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback? onTap;
+
+  const _FunctionCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(28),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.all(25),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            mainAxisAlignment:
+                MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0EBE4),
+                  borderRadius:
+                      BorderRadius.circular(18),
+                ),
+                child: Icon(
+                  icon,
+                  color:
+                      const Color(0xFF2F2924),
+                  size: 29,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF2F2924),
+                ),
+              ),
+
+              const SizedBox(height: 9),
+
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WardrobeChoice extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
+
+  const _WardrobeChoice({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 30,
+                color: const Color(0xFF2F2924),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight:
+                            FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

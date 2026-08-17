@@ -6,17 +6,16 @@ from fastapi.staticfiles import StaticFiles
 
 from app.routers import (
     health,
+    image_generation,
+    recommendation,
     vision,
     wardrobe,
-    recommendation,
-    image_generation,
 )
 
 
 # ============================================================
 # REQUIRED DIRECTORIES
 # ============================================================
-
 
 DIRECTORIES = [
     "outputs",
@@ -27,18 +26,13 @@ DIRECTORIES = [
     "wardrobe_2",
 ]
 
-
 for directory in DIRECTORIES:
-    os.makedirs(
-        directory,
-        exist_ok=True,
-    )
+    os.makedirs(directory, exist_ok=True)
 
 
 # ============================================================
 # APPLICATION
 # ============================================================
-
 
 app = FastAPI(
     title="AI Styling Agent API",
@@ -49,7 +43,6 @@ app = FastAPI(
 # ============================================================
 # CORS
 # ============================================================
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -64,41 +57,38 @@ app.add_middleware(
 # STATIC FILES
 # ============================================================
 
-
+# Generated outfit images.
 app.mount(
     "/images",
-    StaticFiles(
-        directory="outputs/images",
-    ),
+    StaticFiles(directory="outputs/images"),
     name="images",
 )
 
-
+# General outputs.
 app.mount(
     "/outputs",
-    StaticFiles(
-        directory="outputs",
-    ),
+    StaticFiles(directory="outputs"),
     name="outputs",
 )
 
+# Uploaded user images.
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads",
+)
 
-# Personal wardrobe
+# Personal wardrobe images.
 app.mount(
     "/clothes/personal",
-    StaticFiles(
-        directory="wardrobe",
-    ),
+    StaticFiles(directory="wardrobe"),
     name="personal_clothes",
 )
 
-
-# Commercial wardrobe
+# Commercial wardrobe images.
 app.mount(
     "/clothes/commercial",
-    StaticFiles(
-        directory="wardrobe_2",
-    ),
+    StaticFiles(directory="wardrobe_2"),
     name="commercial_clothes",
 )
 
@@ -107,48 +97,27 @@ app.mount(
 # ROUTERS
 # ============================================================
 
-
-app.include_router(
-    health.router,
-)
-
-app.include_router(
-    vision.router,
-)
-
-app.include_router(
-    wardrobe.router,
-)
-
-app.include_router(
-    recommendation.router,
-)
-
-app.include_router(
-    image_generation.router,
-)
+app.include_router(health.router)
+app.include_router(vision.router)
+app.include_router(wardrobe.router)
+app.include_router(recommendation.router)
+app.include_router(image_generation.router)
 
 
 # ============================================================
 # ROOT
 # ============================================================
 
-
 @app.get("/")
 def home() -> dict[str, str]:
     return {
-        "message": (
-            "AI Styling Agent API running."
-        ),
-        "architecture": (
-            "Upload once -> AI Styling or Wardrobe Styling"
-        ),
+        "message": "AI Styling Agent API running.",
+        "architecture": "Upload once -> AI Styling or Wardrobe Styling",
         "function_1": (
             "AI Styling - unrestricted AI outfit "
             "with shopping links and generated image"
         ),
         "function_2": (
-            "Wardrobe Styling - Personal or "
-            "Commercial wardrobe"
+            "Wardrobe Styling - Personal or Commercial wardrobe"
         ),
     }

@@ -1,370 +1,248 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
-
-import '../utils/constants.dart';
+import 'package:image/image.dart' as img;
 
 class ApiService {
-  /// Uses the platform-specific URL configured in AppConstants.
-  static String get baseUrl => AppConstants.baseUrl;
+  // Use the same PC IP that opens FastAPI Swagger on your phone.
+  static const String baseUrl = 'http://xxxxxxxxxxxxxx:8000';
 
-  // ==========================================================
-  // FULL PIPELINE
-  // Vision + Wardrobe + Stylist + Image
-  // ==========================================================
+  Future<File> _convertToJpg(File source) async {
+    final bytes = await source.readAsBytes();
 
-  Future<Map<String, dynamic>?> generateRecommendation(
-    XFile imageFile,
+    final decoded = img.decodeImage(bytes);
+
+    if (decoded == null) {
+      throw const FormatException(
+        'Unable to decode the selected image.',
+      );
+    }
+
+    final jpgBytes = Uint8List.fromList(
+      img.encodeJpg(decoded, quality: 95),
+    );
+
+    final output = File(
+      '${Directory.systemTemp.path}/ai_styling_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+
+    await output.writeAsBytes(jpgBytes);
+
+    return output;
+  }
+
+  Future<Map<String, dynamic>> uploadUserImage(
+    File image,
   ) async {
+    final convertedFile = await _convertToJpg(image);
+
     try {
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/recommendation/generate'),
+        Uri.parse('$baseUrl/recommendation/upload'),
       );
 
-      final bytes = await imageFile.readAsBytes();
-
       request.files.add(
-        http.MultipartFile.fromBytes(
+        await http.MultipartFile.fromPath(
           'user_image',
-          bytes,
-          filename: imageFile.name,
+          convertedFile.path,
+          filename: 'user_image.jpg',
+          contentType: null,
         ),
       );
 
-      final streamedResponse = await request.send();
+      final response = await request.send();
+      final body = await response.stream.bytesToString();
 
-      final response = await http.Response.fromStream(
-        streamedResponse,
-      );
-
-      developer.log(
-        'Generate Status: ${response.statusCode}',
-      );
-
-      developer.log(
-        'Generate Body: ${response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300) {
+        throw Exception(
+          'Image upload failed '
+          '(${response.statusCode}): $body',
+        );
       }
 
-      return null;
-    } catch (e, stackTrace) {
-      developer.log(
-        'Generate failed: $e',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
-      return null;
+      return _decodeObject(body);
+    } finally {
+      if (await convertedFile.exists()) {
+        await convertedFile.delete();
+      }
     }
   }
 
-  // ==========================================================
-  // GENERATE OUTFIT OPTIONS
-  // Vision + Wardrobe + Stylist
-  // ==========================================================
-
-  Future<Map<String, dynamic>?> generateOptions(
-    XFile imageFile,
-  ) async {
-    try {
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl/recommendation/options'),
-      );
-
-      final bytes = await imageFile.readAsBytes();
-
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'user_image',
-          bytes,
-          filename: imageFile.name,
-        ),
-      );
-
-      final streamedResponse = await request.send();
-
-      final response = await http.Response.fromStream(
-        streamedResponse,
-      );
-
-      developer.log(
-        'Options Status: ${response.statusCode}',
-      );
-
-      developer.log(
-        'Options Body: ${response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      }
-
-      return null;
-    } catch (e, stackTrace) {
-      developer.log(
-        'Options failed: $e',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
-      return null;
-    }
-  }
-
-  // ==========================================================
-  // REGENERATE ALL OUTFIT RECOMMENDATIONS
-  // ==========================================================
-
-  Future<Map<String, dynamic>?> regenerateRecommendations(
+  Future<Map<String, dynamic>> generateAiStyle(
     String userImagePath,
-  ) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/recommendation/regenerate'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'user_image_path': userImagePath,
-        }),
-      );
-
-      developer.log(
-        'Regenerate Status: ${response.statusCode}',
-      );
-
-      developer.log(
-        'Regenerate Body: ${response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      }
-
-      return null;
-    } catch (e, stackTrace) {
-      developer.log(
-        'Regeneration failed: $e',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
-      return null;
-    }
+  ) {
+    return _postJson(
+      '/recommendation/ai-style',
+      {
+        'user_image_path': userImagePath,
+      },
+    );
   }
 
-  // ==========================================================
-  // REGENERATE ONE OUTFIT RECOMMENDATION
-  // ==========================================================
-
-  Future<Map<String, dynamic>?> regenerateOneRecommendation({
+  Future<Map<String, dynamic>> generateWardrobeStyle({
     required String userImagePath,
-    required String category,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/recommendation/regenerate-one'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'user_image_path': userImagePath,
-          'category': category,
-        }),
-      );
-
-      developer.log(
-        'Regenerate One Status: ${response.statusCode}',
-      );
-
-      developer.log(
-        'Regenerate One Body: ${response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      }
-
-      return null;
-    } catch (e, stackTrace) {
-      developer.log(
-        'Regenerate one failed: $e',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
-      return null;
-    }
+    required String wardrobeSource,
+  }) {
+    return _postJson(
+      '/recommendation/wardrobe-style',
+      {
+        'user_image_path': userImagePath,
+        'wardrobe_source': wardrobeSource,
+      },
+    );
   }
 
-  // ==========================================================
-  // GENERATE SELECTED OUTFIT IMAGE
-  // ==========================================================
-
-  Future<Map<String, dynamic>?> generateSelectedOutfit({
-    required String prompt,
-    required String userImagePath,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/recommendation/generate-image'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'prompt': prompt,
-          'user_image_path': userImagePath,
-        }),
-      );
-
-      developer.log(
-        'Image Status: ${response.statusCode}',
-      );
-
-      developer.log(
-        'Image Body: ${response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      }
-
-      return null;
-    } catch (e, stackTrace) {
-      developer.log(
-        'Image generation failed: $e',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
-      return null;
-    }
-  }
-
-  // ==========================================================
-  // WARDROBE
-  // Get all wardrobe items
-  // ==========================================================
-
-  Future<Map<String, dynamic>?> getWardrobe() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/wardrobe/'),
-      );
-
-      developer.log(
-        'Wardrobe Status: ${response.statusCode}',
-      );
-
-      developer.log(
-        'Wardrobe Body: ${response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      }
-
-      return null;
-    } catch (e, stackTrace) {
-      developer.log(
-        'Get wardrobe failed: $e',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
-      return null;
-    }
-  }
-
-  // ==========================================================
-  // ADD CLOTHING ITEM
-  // ==========================================================
-
-  Future<Map<String, dynamic>?> addWardrobeItem(
-    XFile imageFile,
+  Future<List<Map<String, dynamic>>> getWardrobe(
+    String source,
   ) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/wardrobe/$source'),
+    );
+
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
+      throw Exception(
+        'Unable to load wardrobe '
+        '(${response.statusCode}): ${response.body}',
+      );
+    }
+
+    final data = _decodeObject(response.body);
+    final rawItems = data['items'];
+
+    if (rawItems is! List) {
+      return <Map<String, dynamic>>[];
+    }
+
+    return rawItems
+        .whereType<Map>()
+        .map(
+          (item) => Map<String, dynamic>.from(item),
+        )
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> addWardrobeItem({
+    required String source,
+    required File image,
+  }) async {
+    final convertedFile = await _convertToJpg(image);
+
     try {
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/wardrobe/add'),
+        Uri.parse('$baseUrl/wardrobe/add/$source'),
       );
 
-      final bytes = await imageFile.readAsBytes();
-
       request.files.add(
-        http.MultipartFile.fromBytes(
+        await http.MultipartFile.fromPath(
           'file',
-          bytes,
-          filename: imageFile.name,
+          convertedFile.path,
+          filename: 'wardrobe_item.jpg',
+          contentType: null,
         ),
       );
 
-      final streamedResponse = await request.send();
+      final response = await request.send();
+      final body = await response.stream.bytesToString();
 
-      final response = await http.Response.fromStream(
-        streamedResponse,
-      );
-
-      developer.log(
-        'Add wardrobe status: ${response.statusCode}',
-      );
-
-      developer.log(
-        'Add wardrobe response: ${response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300) {
+        throw Exception(
+          'Unable to add wardrobe item '
+          '(${response.statusCode}): $body',
+        );
       }
 
-      return null;
-    } catch (e, stackTrace) {
-      developer.log(
-        'Add wardrobe failed: $e',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
-      return null;
+      return _decodeObject(body);
+    } finally {
+      if (await convertedFile.exists()) {
+        await convertedFile.delete();
+      }
     }
   }
 
-  // ==========================================================
-  // DELETE CLOTHING ITEM
-  // ==========================================================
-
-  Future<bool> deleteWardrobeItem(
-    String itemId,
-  ) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/wardrobe/$itemId'),
+  Future<Map<String, dynamic>> deleteWardrobeItem({
+    required String source,
+    required String itemId,
+  }) async {
+    if (itemId.trim().isEmpty) {
+      throw const FormatException(
+        'Wardrobe item ID is empty.',
       );
-
-      developer.log(
-        'Delete status: ${response.statusCode}',
-      );
-
-      developer.log(
-        'Delete response: ${response.body}',
-      );
-
-      return response.statusCode == 200;
-    } catch (e, stackTrace) {
-      developer.log(
-        'Delete wardrobe failed: $e',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
-      return false;
     }
+
+    final response = await http.delete(
+      Uri.parse(
+        '$baseUrl/wardrobe/$source/${Uri.encodeComponent(itemId)}',
+      ),
+    );
+
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
+      throw Exception(
+        'Unable to delete wardrobe item '
+        '(${response.statusCode}): ${response.body}',
+      );
+    }
+
+    return _decodeObject(response.body);
+  }
+
+  String getImageUrl(String imagePath) {
+    if (imagePath.startsWith('http://') ||
+        imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+
+    final normalized =
+        imagePath.replaceAll('\\', '/');
+
+    if (normalized.startsWith('/')) {
+      return '$baseUrl$normalized';
+    }
+
+    return '$baseUrl/$normalized';
+  }
+
+  Future<Map<String, dynamic>> _postJson(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: const {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
+      throw Exception(
+        'Request failed '
+        '(${response.statusCode}): ${response.body}',
+      );
+    }
+
+    return _decodeObject(response.body);
+  }
+
+  Map<String, dynamic> _decodeObject(
+    String body,
+  ) {
+    final decoded = jsonDecode(body);
+
+    if (decoded is! Map) {
+      throw const FormatException(
+        'Expected a JSON object from the server.',
+      );
+    }
+
+    return Map<String, dynamic>.from(decoded);
   }
 }
