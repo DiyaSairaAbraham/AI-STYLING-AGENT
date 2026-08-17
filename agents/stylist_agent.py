@@ -17,7 +17,7 @@ def generate_style_recommendation(
     module1_data,
     wardrobe_items: list,
     style_type: str,
-    category=None
+    wardrobe_source: str
 ):
     log(
         "Running Stylist Agent (Module 3)"

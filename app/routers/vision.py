@@ -36,6 +36,11 @@ async def analyze_image(
                 detail="Only JPG, PNG and WEBP images are allowed"
             )
 
+        if style_type.lower() not in ["formal", "leisure"]:
+            raise HTTPException(
+                status_code=400,
+                detail="style_type must be either formal or leisure"
+            )
 
         os.makedirs(
             UPLOAD_DIR,
