@@ -8,7 +8,7 @@ import '../services/image_service.dart';
 
 import 'options_screen.dart';
 import 'wardrobe_screen.dart';
-
+import 'upload_screen.dart';
 
 class HomeScreen extends StatefulWidget {
 
@@ -161,373 +161,229 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
+  Widget _featureCard(
+      IconData icon,
+      String title,
+    ) {
 
+      return Card(
 
+        child: Padding(
 
+          padding: const EdgeInsets.symmetric(
+            vertical: 20,
+          ),
 
-  @override
-  Widget build(BuildContext context) {
+          child: Column(
 
+            children: [
 
-    return Scaffold(
+              Icon(
+                icon,
+                size: 32,
+              ),
 
+              const SizedBox(height: 10),
 
+              Text(
+                title,
+                textAlign: TextAlign.center,
+              ),
 
-      appBar: AppBar(
-
-
-        title: const Text(
-
-          'AI Styling Agent',
-
-        ),
-
-
-
-        actions: [
-
-
-          IconButton(
-
-            icon: const Icon(
-
-              Icons.checkroom,
-
-            ),
-
-
-
-            tooltip: "My Wardrobe",
-
-
-
-            onPressed: () {
-
-
-
-              Navigator.push(
-
-                context,
-
-                MaterialPageRoute(
-
-                  builder: (_) => const WardrobeScreen(),
-
-                ),
-
-              );
-
-
-            },
-
+            ],
 
           ),
 
+        ),
 
-        ],
+      );
+
+    }
 
 
+
+  
+  @override Widget build(BuildContext context) {
+
+  return Scaffold(
+
+    appBar: AppBar(
+
+      title: const Text(
+        "AI Styling Agent",
       ),
 
+      actions: [
 
+        IconButton(
 
+          icon: const Icon(
+            Icons.checkroom,
+          ),
 
+          onPressed: () {
 
-
-      body: Padding(
-
-
-        padding: const EdgeInsets.all(20),
-
-
-
-        child: Column(
-
-
-
-          children: [
-
-
-
-
-
-            Expanded(
-
-
-
-              child: _selectedImage != null
-
-
-
-                  ? FutureBuilder<Uint8List>(
-
-
-                      future: _selectedImage!.readAsBytes(),
-
-
-
-                      builder: (context, snapshot) {
-
-
-
-                        if (!snapshot.hasData) {
-
-
-
-                          return const Center(
-
-
-
-                            child: CircularProgressIndicator(),
-
-
-
-                          );
-
-
-                        }
-
-
-
-                        return Image.memory(
-
-
-
-                          snapshot.data!,
-
-
-
-                          fit: BoxFit.contain,
-
-
-
-                        );
-
-
-                      },
-
-
-                    )
-
-
-
-                  : const Center(
-
-
-
-                      child: Icon(
-
-
-
-                        Icons.image,
-
-
-
-                        size: 120,
-
-
-
-                      ),
-
-
-
-                    ),
-
-
-
-            ),
-
-
-
-
-
-
-
-            const SizedBox(height: 20),
-
-
-
-
-
-
-
-            Text(
-
-
-
-              _status,
-
-
-
-              textAlign: TextAlign.center,
-
-
-
-              style: const TextStyle(
-
-
-
-                fontSize: 16,
-
-
-
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const WardrobeScreen(),
               ),
+            );
 
-
-
-            ),
-
-
-
-
-
-
-            const SizedBox(height: 20),
-
-
-
-
-
-
-
-            SizedBox(
-
-
-
-              width: double.infinity,
-
-
-
-              child: ElevatedButton(
-
-
-
-                onPressed: _pickImage,
-
-
-
-                child: const Text(
-
-
-
-                  'Upload User Image',
-
-
-
-                ),
-
-
-
-              ),
-
-
-
-            ),
-
-
-
-
-
-
-
-            const SizedBox(height: 12),
-
-
-
-
-
-
-
-            SizedBox(
-
-
-
-              width: double.infinity,
-
-
-
-              child: ElevatedButton(
-
-
-
-                onPressed: _loading
-
-                    ? null
-
-                    : _generateOutfit,
-
-
-
-                child: _loading
-
-
-
-                    ? const SizedBox(
-
-
-
-                        width: 20,
-
-
-
-                        height: 20,
-
-
-
-                        child: CircularProgressIndicator(
-
-
-
-                          strokeWidth: 2,
-
-
-
-                        ),
-
-
-
-                      )
-
-
-
-                    : const Text(
-
-
-
-                        'Generate Outfit',
-
-
-
-                      ),
-
-
-
-              ),
-
-
-
-            ),
-
-
-
-
-
-          ],
-
-
+          },
 
         ),
 
+      ],
 
+    ),
+
+    body: SafeArea(
+
+      child: Padding(
+
+        padding: const EdgeInsets.all(24),
+
+        child: Column(
+
+          crossAxisAlignment: CrossAxisAlignment.center,
+
+          children: [
+
+            const SizedBox(height: 20),
+
+
+            Container(
+              height: 220,
+              width: double.infinity,
+
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF4F6E5),
+                    Colors.white,
+                  ],
+                ),
+              ),
+
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  "assets/images/fashion_banner.jpg",
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            Row(
+
+                children: [
+
+                  Expanded(
+                    child: _featureCard(
+                      Icons.psychology,
+                      "AI Analysis",
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: _featureCard(
+                      Icons.checkroom,
+                      "Outfits",
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: _featureCard(
+                      Icons.auto_awesome,
+                      "Generation",
+                    ),
+                  ),
+
+                ],
+
+              ),
+
+            const Text(
+
+              "AI Styling Agent",
+
+              textAlign: TextAlign.center,
+
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
+
+            ),
+
+            const SizedBox(height: 10),
+
+            const Text(
+
+              "Upload your photo and receive AI-powered outfit recommendations tailored to your style.",
+
+              textAlign: TextAlign.center,
+
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+
+            ),
+
+            const SizedBox(height: 40),
+          
+
+            SizedBox(
+
+              width: double.infinity,
+
+              child: ElevatedButton.icon(
+
+                icon: const Icon(
+                  Icons.upload,
+                ),
+
+                label: const Text(
+                  "Start Styling",
+                ),
+
+                onPressed: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const UploadScreen(),
+    ),
+  );
+},
+
+              ),
+
+            ),
+
+            const SizedBox(height: 20),
+
+          ],
+
+        ),
 
       ),
 
+    ),
 
+  );
 
-    );
-
-
-  }
+}
 
 
 }

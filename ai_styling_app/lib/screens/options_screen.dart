@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/recommendation.dart';
 import '../services/api_service.dart';
-import 'outfit_result_screen.dart';
+
+import 'package:ai_styling_app/screens/outfit_result_screen.dart';
 
 class OptionsScreen extends StatefulWidget {
 final Map<String, dynamic> optionsData;
@@ -143,15 +144,7 @@ if (imageUrl == null ||imageUrl.toString().trim().isEmpty)  {
   return;
 }
 
-Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => OutfitResultScreen(
-      imageUrl: imageUrl.toString(),
-      recommendation: Recommendation.fromJson(outfit),
-    ),
-  ),
-);
+
 } catch (e) {
   if (!mounted) {
     return;

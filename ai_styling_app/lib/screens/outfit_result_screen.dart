@@ -1,385 +1,105 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import '../models/recommendation.dart';
-
-
 
 class OutfitResultScreen extends StatelessWidget {
-
-
-  final String imageUrl;
-
-  final Recommendation recommendation;
-
-
+  final String imagePath;
+  final String styleType;
+  final String sourceType;
 
   const OutfitResultScreen({
-
     super.key,
-
-    required this.imageUrl,
-
-    required this.recommendation,
-
+    required this.imagePath,
+    required this.styleType,
+    required this.sourceType,
   });
-
-
-
-
-
-  Future<void> _openUrl(String url) async {
-
-
-    if(url.isEmpty){
-      return;
-    }
-
-
-
-    final Uri uri =
-    Uri.parse(url);
-
-
-
-    await launchUrl(
-
-      uri,
-
-      mode:
-      LaunchMode.externalApplication,
-
-    );
-
-
-  }
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
-
-
-
-    final uniqueImageUrl =
-        "$imageUrl?timestamp=${DateTime.now().millisecondsSinceEpoch}";
-
-
-
     return Scaffold(
-
-
-      appBar:
-      AppBar(
-
-        title:
-        const Text(
-          "Generated Outfit",
-        ),
-
+      appBar: AppBar(
+        title: const Text("Generated Outfit"),
       ),
 
+      body: Padding(
+        padding: const EdgeInsets.all(24),
 
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
 
+          children: [
 
-      body:
+            const SizedBox(height: 20),
 
-      SingleChildScrollView(
-
-
-        child:
-
-        Column(
-
-
-          children:[
-
-
-
-            Image.network(
-
-              uniqueImageUrl,
-
-              height:450,
-
-              fit:
-              BoxFit.contain,
-
-              errorBuilder:
-                  (context,error,stack){
-
-                return const Text(
-                  "Failed to load image",
-                );
-
-              },
-
+            const Text(
+              "Your Generated Outfit",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
             ),
 
+            const SizedBox(height: 20),
 
+            Container(
+              height: 350,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(20),
+              ),
 
-
-            const SizedBox(
-              height:20,
+              child: const Center(
+                child: Text(
+                  "Generated Outfit Image",
+                  style: TextStyle(fontSize: 20),
+                ),
+              ),
             ),
 
-
-
+            const SizedBox(height: 20),
 
             Text(
-
-              recommendation.outfitName,
-
-
-              style:
-              const TextStyle(
-
-                fontSize:24,
-
-                fontWeight:
-                FontWeight.bold,
-
+              "Style: ${styleType.toUpperCase()}",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-
             ),
 
+            const SizedBox(height: 10),
 
-
-
-            Padding(
-
-              padding:
-              const EdgeInsets.all(16),
-
-
-              child:
-
-              Text(
-
-                recommendation.stylingAdvice,
-
-                textAlign:
-                TextAlign.center,
-
+            Text(
+              "Source: ${sourceType.toUpperCase()}",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-
             ),
 
+            const Spacer(),
 
-
-
-            const SizedBox(
-              height:20,
+            ElevatedButton(
+              onPressed: () {},
+              child: const Text("Save Outfit"),
             ),
 
-
-
-
-
-            if(recommendation.shoppingLinks != null)
-
-              Column(
-
-                children:[
-
-
-
-                  const Text(
-
-                    "Shop Similar Items",
-
-                    style:
-                    TextStyle(
-
-                      fontSize:20,
-
-                      fontWeight:
-                      FontWeight.bold,
-
-                    ),
-
-                  ),
-
-
-
-
-                  const SizedBox(
-                    height:15,
-                  ),
-
-
-
-
-                  ...recommendation
-                      .shoppingLinks!
-                      .items
-                      .map(
-
-
-
-                          (item){
-
-
-                        return Card(
-
-
-                          margin:
-                          const EdgeInsets.all(10),
-
-
-                          child:
-
-                          Padding(
-
-                            padding:
-                            const EdgeInsets.all(12),
-
-
-                            child:
-
-                            Column(
-
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-
-
-                              children:[
-
-
-
-                                Text(
-
-                                  item.description,
-
-                                  style:
-                                  const TextStyle(
-
-                                    fontWeight:
-                                    FontWeight.bold,
-
-                                  ),
-
-                                ),
-
-
-
-
-                                const SizedBox(
-                                  height:10,
-                                ),
-
-
-
-
-                                Row(
-
-                                  children:[
-
-
-                                    Expanded(
-
-                                      child:
-
-                                      ElevatedButton(
-
-                                        onPressed:(){
-
-                                          _openUrl(
-                                            item.hm,
-                                          );
-
-                                        },
-
-
-                                        child:
-                                        const Text(
-                                          "H&M",
-                                        ),
-
-                                      ),
-
-                                    ),
-
-
-
-
-                                    const SizedBox(
-                                      width:10,
-                                    ),
-
-
-
-
-
-                                    Expanded(
-
-                                      child:
-
-                                      ElevatedButton(
-
-                                        onPressed:(){
-
-                                          _openUrl(
-                                            item.uniqlo,
-                                          );
-
-                                        },
-
-
-                                        child:
-                                        const Text(
-                                          "Uniqlo",
-                                        ),
-
-                                      ),
-
-                                    ),
-
-
-
-                                  ],
-
-                                )
-
-
-                              ],
-
-
-                            ),
-
-
-                          ),
-
-
-                        );
-
-
-                      }
-
-                  )
-
-
-                ],
-
-              )
-
-
-
+            const SizedBox(height: 12),
+
+            ElevatedButton(
+              onPressed: () {},
+              child: const Text("Download"),
+            ),
+
+            const SizedBox(height: 12),
+
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("Generate Another Outfit"),
+            ),
           ],
-
-
         ),
-
-
       ),
-
-
     );
-
   }
-
-
 }
