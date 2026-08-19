@@ -278,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
 
             Row(
 
@@ -286,26 +286,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   Expanded(
                     child: _featureCard(
-                      Icons.psychology,
-                      "AI Analysis",
+                      Icons.psychology_alt ,
+                      "Personal Analysis",
                     ),
                   ),
 
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: _featureCard(
-                      Icons.checkroom,
-                      "Outfits",
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
 
                   Expanded(
                     child: _featureCard(
                       Icons.auto_awesome,
-                      "Generation",
+                      "Smart Recommendations",
+                    ),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: _featureCard(
+                      Icons.auto_awesome_motion,
+                      "AI Visualization",
                     ),
                   ),
 
@@ -313,6 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               ),
 
+            const SizedBox(height: 50),
             const Text(
 
               "AI Styling Agent",
@@ -326,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 30),
 
             const Text(
 
@@ -341,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 180),
           
 
             SizedBox(

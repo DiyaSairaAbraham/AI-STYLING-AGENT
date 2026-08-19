@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:ai_styling_app/screens/outfit_result_screen.dart';
+import '../services/api_service.dart';
 
 class SelectWardrobeSourceScreen extends StatefulWidget {
   final String imagePath;
   final String styleType;
+
+  
 
   const SelectWardrobeSourceScreen({
     super.key,
     required this.imagePath,
     required this.styleType,
   });
+
 
   @override
   State<SelectWardrobeSourceScreen> createState() =>
@@ -18,7 +22,11 @@ class SelectWardrobeSourceScreen extends StatefulWidget {
 
 class _SelectWardrobeSourceScreenState
     extends State<SelectWardrobeSourceScreen> {
-  String selectedSource = "personal";
+  String selectedSource = "";
+
+  bool isLoading = false;
+
+  final ApiService apiService = ApiService();
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +35,26 @@ class _SelectWardrobeSourceScreenState
         title: const Text("Wardrobe Source"),
       ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+      body: isLoading
+              ? const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
 
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+                      CircularProgressIndicator(),
 
+                      SizedBox(height: 20),
+
+                      Text(
+                        "Generating your outfit...\nThis may take up to 1 minute",
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
           children: [
 
             const SizedBox(height: 20),
@@ -91,30 +113,37 @@ class _SelectWardrobeSourceScreenState
 
             const SizedBox(height: 30),
 
-            _buildSourceCard(
-              icon: Icons.checkroom,
-              title: "Personal",
-              subtitle: "Use clothes from your wardrobe",
-              value: "personal",
+
+            HoverCard(
+              child: _buildSourceCard(
+                icon: Icons.person,
+                title: "Personal",
+                subtitle: "Use clothes from your personal wardrobe",
+                value: "personal",
+              ),
             ),
 
             const SizedBox(height: 16),
 
-            _buildSourceCard(
-              icon: Icons.shopping_bag,
-              title: "Commercial",
-              subtitle: "Use clothes from fashion catalog",
-              value: "commercial",
-            ),
+            HoverCard(
+                child: _buildSourceCard(
+                  icon: Icons.shopping_bag,
+                  title: "Commercial",
+                  subtitle: "Use items from commercial catalog",
+                  value: "commercial",
+                ),
+              ),
 
             const SizedBox(height: 16),
 
-            _buildSourceCard(
-              icon: Icons.public,
-              title: "Open World",
-              subtitle: "Use online fashion items",
-              value: "open_world",
-            ),
+            HoverCard(
+                child: _buildSourceCard(
+                  icon: Icons.public,
+                  title: "Open World",
+                  subtitle: "Let AI creates outfits from the entire fashion world",
+                  value: "open_world",
+                ),
+              ),
 
             const Spacer(),
 
@@ -128,20 +157,81 @@ class _SelectWardrobeSourceScreenState
                   "Generate Outfit",
                 ),
 
-                onPressed: () {
+                onPressed: () async {
 
-                                    Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => OutfitResultScreen(
-                        imagePath: widget.imagePath,
+                      setState(() {
+                        isLoading = true;
+                      });
+
+                      final optionsResult =
+                          await apiService.generateOutfitOptions(
+                        userImagePath: widget.imagePath,
                         styleType: widget.styleType,
-                        sourceType: selectedSource,
-                      ),
-                    ),
-);
+                        wardrobeSource: selectedSource,
+                      );
 
-                },
+                      if (optionsResult == null) {
+
+                        setState(() {
+                          isLoading = false;
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Failed to generate outfit",
+                            ),
+                          ),
+                        );
+
+                        return;
+                      }
+
+                      final recommendation =
+                          optionsResult["data"]
+                              ["recommendations"][0];
+
+                      final imagePrompt =
+                          recommendation[
+                              "image_generation_prompt"];
+
+                      final imageResult =
+                          await apiService.generateSelectedOutfit(
+                        prompt: imagePrompt,
+                        userImagePath: widget.imagePath,
+                      );
+
+                      setState(() {
+                        isLoading = false;
+                      });
+
+                      if (imageResult == null) {
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Failed to generate image",
+                            ),
+                          ),
+                        );
+
+                        return;
+                      }
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => OutfitResultScreen(
+                            imagePath:
+                                imageResult["image_url"],
+                            styleType:
+                                widget.styleType,
+                            sourceType:
+                                selectedSource,
+                          ),
+                        ),
+                      );
+                    },
               ),
             ),
 
@@ -241,6 +331,54 @@ class _SelectWardrobeSourceScreenState
               ),
           ],
         ),
+      ),
+    );
+  }
+ 
+}
+
+class HoverCard extends StatefulWidget {
+  final Widget child;
+
+  const HoverCard({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  State<HoverCard> createState() => _HoverCardState();
+}
+
+class _HoverCardState extends State<HoverCard> {
+  bool isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+
+      onEnter: (_) {
+        setState(() {
+          isHovered = true;
+        });
+      },
+
+      onExit: (_) {
+        setState(() {
+          isHovered = false;
+        });
+      },
+
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+
+        transform: Matrix4.translationValues(
+          0,
+          isHovered ? -8 : 0,
+          0,
+        ),
+
+        child: widget.child,
       ),
     );
   }

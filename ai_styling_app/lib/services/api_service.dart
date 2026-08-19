@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../utils/constants.dart';
 
+import 'package:http_parser/http_parser.dart';
 class ApiService {
   /// Uses the platform-specific URL configured in AppConstants.
   static String get baseUrl => AppConstants.baseUrl;
@@ -367,4 +368,81 @@ class ApiService {
       return false;
     }
   }
+
+  Future<Map<String, dynamic>?> analyzeImage({
+    required XFile imageFile,
+    required String styleType,
+  }) async {
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/vision/analyze'),
+      );
+
+      request.fields['style_type'] = styleType;
+
+      final bytes = await imageFile.readAsBytes();
+      
+
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: imageFile.name,
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+
+      final streamedResponse = await request.send();
+
+      final response =
+          await http.Response.fromStream(
+        streamedResponse,
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> generateOutfitOptions({
+    required String userImagePath,
+    required String styleType,
+    required String wardrobeSource,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/recommendation/options'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'user_image_path': userImagePath,
+          'style_type': styleType,
+          'wardrobe_source': wardrobeSource,
+        }),
+      );
+
+      print(response.statusCode);
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      return null;
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
+
+
+
 }

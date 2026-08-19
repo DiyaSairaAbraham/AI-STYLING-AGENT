@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+
+import 'package:gal/gal.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
+import 'package:file_saver/file_saver.dart';
 
 class OutfitResultScreen extends StatelessWidget {
   final String imagePath;
@@ -12,21 +18,70 @@ class OutfitResultScreen extends StatelessWidget {
     required this.sourceType,
   });
 
+  Future<void> downloadImage(
+    BuildContext context,
+  ) async {
+
+    try {
+
+      final response = await Dio().get(
+        imagePath,
+        options: Options(
+          responseType: ResponseType.bytes,
+        ),
+      );
+
+      final bytes =
+          Uint8List.fromList(response.data);
+
+      if (kIsWeb) {
+
+        await FileSaver.instance.saveFile(
+          name: 'generated_outfit',
+          bytes: bytes,
+          ext: 'png',
+          mimeType: MimeType.png,
+        );
+
+      } else {
+
+        await Gal.putImageBytes(
+          bytes,
+        );
+
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Image downloaded successfully',
+          ),
+        ),
+      );
+
+    } catch (e) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Download failed: $e',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Generated Outfit"),
       ),
-
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-
           children: [
-
             const SizedBox(height: 20),
 
             const Text(
@@ -40,17 +95,39 @@ class OutfitResultScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            Container(
-              height: 350,
-              decoration: BoxDecoration(
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                height: 500,
                 color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(20),
-              ),
+                child: Image.network(
+                  imagePath,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (
+                    context,
+                    child,
+                    loadingProgress,
+                  ) {
+                    if (loadingProgress == null) {
+                      return child;
+                    }
 
-              child: const Center(
-                child: Text(
-                  "Generated Outfit Image",
-                  style: TextStyle(fontSize: 20),
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                  errorBuilder: (
+                    context,
+                    error,
+                    stackTrace,
+                  ) {
+                    return const Center(
+                      child: Text(
+                        "Failed to load generated image",
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -75,19 +152,16 @@ class OutfitResultScreen extends StatelessWidget {
               ),
             ),
 
-            const Spacer(),
+            const SizedBox(height: 30),
 
             ElevatedButton(
-              onPressed: () {},
-              child: const Text("Save Outfit"),
-            ),
-
-            const SizedBox(height: 12),
-
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text("Download"),
-            ),
+                onPressed: () {
+                  downloadImage(context);
+                },
+                child: const Text(
+                  "Download",
+                ),
+              ),
 
             const SizedBox(height: 12),
 
