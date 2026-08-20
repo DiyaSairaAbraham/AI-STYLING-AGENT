@@ -60,20 +60,17 @@ async def generate_options(
 
             wardrobe_data = list_commercial_wardrobe()
 
-        else:
+        elif request.wardrobe_source == "open_world":
 
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "status": "failed",
-                    "message": "Invalid wardrobe source"
-                }
-            )
+            wardrobe_data = []
+
+        
 
         recommendations = generate_style_recommendation(
             user_profile,
             wardrobe_data,
             request.style_type,
+            request.wardrobe_source,
         )
 
         for outfit in recommendations.recommendations:
@@ -165,11 +162,11 @@ async def regenerate_one_option(
 
         wardrobe_data = list_wardrobe()
 
-        # Generate only the requested category.
-        recommendation = generate_style_recommendation(
+        recommendations = generate_style_recommendation(
             user_profile,
             wardrobe_data,
-            category=request.category,
+            request.style_type,
+            request.wardrobe_source,
         )
 
         print(

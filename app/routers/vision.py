@@ -28,13 +28,13 @@ async def analyze_image(
             "image/png",
             "image/webp"
         ]
+        print("CONTENT TYPE:", file.content_type)
+        #if file.content_type not in allowed_types:
 
-        if file.content_type not in allowed_types:
-
-            raise HTTPException(
-                status_code=400,
-                detail="Only JPG, PNG and WEBP images are allowed"
-            )
+        #    raise HTTPException(
+        #       status_code=400,
+        #        detail="Only JPG, PNG and WEBP images are allowed"
+        #    ) 
 
         if style_type.lower() not in ["formal", "leisure"]:
             raise HTTPException(
@@ -88,6 +88,9 @@ async def analyze_image(
 
             "message":
             "Vision analysis completed",
+
+            "user_image_path":
+            image_path,
 
             "profile":
             result.model_dump()

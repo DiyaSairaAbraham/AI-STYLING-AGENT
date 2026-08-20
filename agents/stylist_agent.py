@@ -53,28 +53,96 @@ def generate_style_recommendation(
         wardrobe_data
     )
 
-    if category is None:
 
-        if style_type.lower() == "formal":
+    if style_type.lower() == "formal":
 
-            category_instruction = """
+        category_instruction = """
     Create EXACTLY 2 outfit recommendations.
 
-    Categories:
+    STYLE RULES:
 
-    1. Business Formal
-    2. Smart Business
+    - ONLY formal and business outfits.
+    - Allowed categories:
+        1. Business Formal
+        2. Smart Business
+
+    - Blazers are allowed.
+    - Dress shirts are allowed.
+    - Tailored trousers are allowed.
+    - Formal shoes are allowed.
+
+    - NEVER generate:
+        - Weekend Casual
+        - Smart Casual
+        - Streetwear
+        - Resort Wear
+        - Vacation Looks
+        - Relaxed Casual Looks
     """
 
-        else:
+    elif style_type.lower() == "leisure":
 
-            category_instruction = """
+        category_instruction = """
     Create EXACTLY 2 outfit recommendations.
 
-    Categories:
+    STYLE RULES:
 
-    1. Smart Casual
-    2. Weekend Casual
+    - ONLY leisure and casual outfits.
+    - Allowed categories:
+        1. Smart Casual
+        2. Weekend Casual
+
+    - T-shirts are allowed.
+    - Polo shirts are allowed.
+    - Casual shirts are allowed.
+    - Jeans are allowed.
+    - Chinos are allowed.
+    - Sneakers are allowed.
+
+    - NEVER generate:
+        - Business Formal
+        - Smart Business
+        - Suit Looks
+        - Office Looks
+        - Formal Blazers
+        - Formal Trousers
+        - Business Attire
+    """
+
+    else:
+
+        category_instruction = """
+    Create EXACTLY 2 outfit recommendations.
+    """
+
+    if wardrobe_source == "open_world":
+
+        wardrobe_section = """
+    OPEN WORLD MODE
+
+    You are NOT restricted to any wardrobe database.
+
+    Create outfit recommendations freely from your fashion knowledge.
+
+    Do NOT use wardrobe item IDs.
+
+    Do NOT use commercial catalog items.
+
+    Generate realistic clothing descriptions directly.
+    """
+
+    else:
+
+        wardrobe_section = f"""
+
+    Wardrobe Database:
+
+    {json.dumps(wardrobe_data, indent=2)}
+
+    Rules:
+
+    - Only use wardrobe database items.
+    - Do not invent clothes.
     """
 
     context_prompt = f"""
@@ -90,6 +158,22 @@ TASK:
 Selected Style:
 
 {style_type.upper()}
+
+IMPORTANT:
+
+You MUST strictly follow the selected style.
+
+If style is FORMAL:
+generate ONLY formal/business outfits.
+
+If style is LEISURE:
+generate ONLY casual/leisure outfits.
+
+Do not mix styles.
+
+A leisure request must never return business outfits.
+
+A formal request must never return casual outfits.
 
 {category_instruction}
 
@@ -157,9 +241,7 @@ User Analysis:
 
 {json.dumps(module1_data, indent=2)}
 
-Wardrobe Database:
-
-{json.dumps(wardrobe_data, indent=2)}
+{wardrobe_section}
 
 Return ONLY structured output.
 """
