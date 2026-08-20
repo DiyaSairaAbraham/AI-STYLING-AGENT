@@ -10,12 +10,13 @@ class OutfitResultScreen extends StatelessWidget {
   final String imagePath;
   final String styleType;
   final String sourceType;
-
+  final String stylingAdvice;
   const OutfitResultScreen({
     super.key,
     required this.imagePath,
     required this.styleType,
     required this.sourceType,
+    required this.stylingAdvice,
   });
 
   Future<void> downloadImage(
@@ -75,7 +76,7 @@ class OutfitResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Generated Outfit"),
+        
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -84,6 +85,24 @@ class OutfitResultScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 20),
 
+            Text(
+              "Style: ${styleType.toUpperCase()}",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              "Source: ${sourceType.toUpperCase()}",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            
             const Text(
               "Your Generated Outfit",
               textAlign: TextAlign.center,
@@ -132,25 +151,28 @@ class OutfitResultScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            Text(
-              "Style: ${styleType.toUpperCase()}",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+const Text(
+  "Styling Advice",
+  style: TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+  ),
+),
 
-            const SizedBox(height: 10),
+const SizedBox(height: 10),
 
-            Text(
-              "Source: ${sourceType.toUpperCase()}",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+Text(
+  stylingAdvice,
+  style: const TextStyle(
+    fontSize: 16,
+    height: 1.5,
+    color: Colors.black87,
+  ),
+),
+
+            
 
             const SizedBox(height: 30),
 

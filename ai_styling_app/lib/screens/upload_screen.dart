@@ -101,7 +101,7 @@ class _UploadScreenState extends State<UploadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Upload Photo"),
+        
       ),
 
       body: SingleChildScrollView(
@@ -414,7 +414,14 @@ class _UploadScreenState extends State<UploadScreen> {
                       Body Type: ${visionResult?['profile']?['user_features']?['body_type'] ?? ""}
                       """,
                       ),
+                    const Text(
+                      "Advantages",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
 
+                    const SizedBox(height: 8),
                     Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children:
@@ -449,7 +456,14 @@ class _UploadScreenState extends State<UploadScreen> {
                       ),
 
                     const SizedBox(height: 20),
+                    const Text(
+                      "Improvements",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
 
+                    const SizedBox(height: 8),
                     Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children:

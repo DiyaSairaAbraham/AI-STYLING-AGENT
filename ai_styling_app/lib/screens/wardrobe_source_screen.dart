@@ -32,7 +32,7 @@ class _SelectWardrobeSourceScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Wardrobe Source"),
+        
       ),
 
       body: isLoading
@@ -195,6 +195,9 @@ class _SelectWardrobeSourceScreenState
                           recommendation[
                               "image_generation_prompt"];
 
+                      final stylingAdvice =
+                             recommendation["styling_advice"];
+
                       final imageResult =
                           await apiService.generateSelectedOutfit(
                         prompt: imagePrompt,
@@ -228,6 +231,7 @@ class _SelectWardrobeSourceScreenState
                                 widget.styleType,
                             sourceType:
                                 selectedSource,
+                            stylingAdvice: stylingAdvice,    
                           ),
                         ),
                       );
