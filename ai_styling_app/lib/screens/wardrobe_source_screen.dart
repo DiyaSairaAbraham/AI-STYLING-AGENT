@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:ai_styling_app/screens/outfit_result_screen.dart';
-import '../services/api_service.dart';
 
-// ============================================================
-// App-wide purple theme (same as HomeScreen & UploadScreen)
-// ============================================================
+import '../models/wardrobe_item.dart';
+import '../services/api_service.dart';
+import '../services/wardrobe_service.dart';
+
 class AppTheme {
   static const Color purpleDeep = Color(0xFF4C2FD6);
   static const Color purpleAccent = Color(0xFF6C48F2);
@@ -31,11 +31,244 @@ class SelectWardrobeSourceScreen extends StatefulWidget {
 
 class _SelectWardrobeSourceScreenState
     extends State<SelectWardrobeSourceScreen> {
-  String selectedSource = "";
+  final ApiService apiService = ApiService();
+  final WardrobeService wardrobeService = WardrobeService();
+
+  String selectedSource = '';
 
   bool isLoading = false;
+  bool isWardrobeLoading = false;
 
-  final ApiService apiService = ApiService();
+  List<WardrobeItem> wardrobe = [];
+
+  final Set<String> selectedItemIds = <String>{};
+
+  Future<void> loadWardrobe() async {
+    if (isWardrobeLoading || !mounted) {
+      return;
+    }
+
+    setState(() {
+      isWardrobeLoading = true;
+    });
+
+    try {
+      final items = await wardrobeService.getWardrobe();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        wardrobe = items;
+        isWardrobeLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        isWardrobeLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not load your wardrobe: $e',
+          ),
+        ),
+      );
+    }
+  }
+
+  void selectSource(String source) {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      selectedSource = source;
+
+      if (source != 'personal') {
+        selectedItemIds.clear();
+      }
+    });
+
+    if (source == 'personal' && wardrobe.isEmpty) {
+      loadWardrobe();
+    }
+  }
+
+  void toggleWardrobeItem(String itemId) {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      if (selectedItemIds.contains(itemId)) {
+        selectedItemIds.remove(itemId);
+      } else {
+        selectedItemIds.add(itemId);
+      }
+    });
+  }
+
+  Future<void> generateOutfit() async {
+    if (isLoading) {
+      return;
+    }
+
+    if (selectedSource.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select a wardrobe source first.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (widget.imagePath.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'User image path is missing.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final optionsResult =
+          await apiService.generateOutfitOptions(
+        userImagePath: widget.imagePath,
+        styleType: widget.styleType,
+        wardrobeSource: selectedSource,
+
+        // Empty list is valid for Personal.
+        // The backend should interpret [] as:
+        // "let the AI choose from the complete personal wardrobe."
+        selectedItemIds: selectedItemIds.toList(),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (optionsResult == null) {
+        throw Exception(
+          'The outfit recommendation request failed.',
+        );
+      }
+
+      final data = optionsResult['data'];
+
+      if (data is! Map<String, dynamic>) {
+        throw Exception(
+          'Invalid recommendation response.',
+        );
+      }
+
+      final recommendations = data['recommendations'];
+
+      if (recommendations is! List ||
+          recommendations.isEmpty) {
+        throw Exception(
+          'No outfit recommendations were returned.',
+        );
+      }
+
+      final recommendation = recommendations.first;
+
+      if (recommendation is! Map<String, dynamic>) {
+        throw Exception(
+          'Invalid outfit recommendation.',
+        );
+      }
+
+      final imagePrompt =
+          recommendation['image_generation_prompt'];
+
+      final stylingAdvice =
+          recommendation['styling_advice'];
+
+      if (imagePrompt == null ||
+          imagePrompt.toString().trim().isEmpty) {
+        throw Exception(
+          'No image generation prompt was returned.',
+        );
+      }
+
+      final imageResult =
+          await apiService.generateSelectedOutfit(
+        prompt: imagePrompt.toString(),
+        userImagePath: widget.imagePath,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (imageResult == null) {
+        throw Exception(
+          'The outfit image could not be generated.',
+        );
+      }
+
+      final imageUrl = imageResult['image_url'];
+
+      if (imageUrl == null ||
+          imageUrl.toString().trim().isEmpty) {
+        throw Exception(
+          'The generated image URL is missing.',
+        );
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OutfitResultScreen(
+            imagePath: imageUrl.toString(),
+            styleType: widget.styleType,
+            sourceType: selectedSource,
+            stylingAdvice:
+                stylingAdvice?.toString() ?? '',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to generate outfit: $e',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,125 +277,202 @@ class _SelectWardrobeSourceScreenState
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.inkDark),
+        iconTheme: const IconThemeData(
+          color: AppTheme.inkDark,
+        ),
       ),
       extendBodyBehindAppBar: true,
-      body: isLoading
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(
-                    color: AppTheme.purpleAccent,
-                    strokeWidth: 4,
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Generating your outfit...\nThis may take up to 1 minute",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppTheme.inkMuted,
-                    ),
-                  ),
-                ],
+      body: SafeArea(
+        child: isLoading
+            ? _buildLoadingView()
+            : _buildContent(),
+      ),
+    );
+  }
+
+  Widget _buildLoadingView() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(
+              color: AppTheme.purpleAccent,
+              strokeWidth: 4,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Generating your outfit...\n'
+              'This may take up to 1 minute',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppTheme.inkMuted,
+                fontSize: 15,
+                height: 1.4,
               ),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 60),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                  // ---------- AI Powered badge ----------
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: AppTheme.purpleSoft.withOpacity(0.4),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.auto_awesome, size: 16, color: AppTheme.purpleDeep),
-                          SizedBox(width: 8),
-                          Text(
-                            'AI POWERED',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.purpleDeep,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
+  Widget _buildContent() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            30,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight - 54,
+            ),
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 35),
+
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // ---------- Main headline ----------
-                  const Text(
-                    "Choose Wardrobe Source",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.inkDark,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // Accent underline like the other screens
-                  const Center(
-                    child: SizedBox(
-                      width: 48,
-                      height: 4,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: AppTheme.purpleAccent,
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(2)),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    "Select where the outfit items should come from.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppTheme.inkMuted,
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // ---------- Selected style info ----------
-                  Container(
-                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius:
+                          BorderRadius.circular(30),
                       border: Border.all(
-                        color: AppTheme.purpleSoft.withOpacity(0.4),
+                        color: AppTheme.purpleSoft
+                            .withOpacity(0.4),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.purpleDeep.withOpacity(0.06),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 16,
+                          color: AppTheme.purpleDeep,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'AI POWERED',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.purpleDeep,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  'Choose Wardrobe Source',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.inkDark,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                const Center(
+                  child: SizedBox(
+                    width: 48,
+                    height: 4,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppTheme.purpleAccent,
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                const Text(
+                  'Choose where your outfit should come from.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppTheme.inkMuted,
+                    height: 1.4,
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                _buildSelectedStyleCard(),
+
+                const SizedBox(height: 30),
+
+                _buildSourceCard(
+                  icon: Icons.person,
+                  title: 'Personal',
+                  subtitle:
+                      'Choose clothes from your personal wardrobe',
+                  value: 'personal',
+                ),
+
+                if (selectedSource == 'personal') ...[
+                  const SizedBox(height: 20),
+                  _buildPersonalWardrobe(),
+                ],
+
+                const SizedBox(height: 16),
+
+                _buildSourceCard(
+                  icon: Icons.shopping_bag,
+                  title: 'Commercial',
+                  subtitle:
+                      'Use items from commercial catalog',
+                  value: 'commercial',
+                ),
+
+                const SizedBox(height: 16),
+
+                _buildSourceCard(
+                  icon: Icons.public,
+                  title: 'Open World',
+                  subtitle:
+                      'Let AI create outfits from the entire '
+                      'fashion world',
+                  value: 'open_world',
+                ),
+
+                const SizedBox(height: 30),
+
+                if (selectedSource == 'personal' &&
+                    selectedItemIds.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.purpleAccent
+                          .withOpacity(0.10),
+                      borderRadius:
+                          BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppTheme.purpleAccent
+                            .withOpacity(0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -173,7 +483,8 @@ class _SelectWardrobeSourceScreenState
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            "Selected Style: ${widget.styleType.toUpperCase()}",
+                            '${selectedItemIds.length} wardrobe '
+                            '${selectedItemIds.length == 1 ? 'item' : 'items'} selected',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: AppTheme.inkDark,
@@ -184,143 +495,88 @@ class _SelectWardrobeSourceScreenState
                     ),
                   ),
 
-                  const SizedBox(height: 30),
-
-                  HoverCard(
-                    child: _buildSourceCard(
-                      icon: Icons.person,
-                      title: "Personal",
-                      subtitle: "Use clothes from your personal wardrobe",
-                      value: "personal",
-                    ),
-                  ),
-
+                if (selectedSource == 'personal' &&
+                    selectedItemIds.isNotEmpty)
                   const SizedBox(height: 16),
 
-                  HoverCard(
-                    child: _buildSourceCard(
-                      icon: Icons.shopping_bag,
-                      title: "Commercial",
-                      subtitle: "Use items from commercial catalog",
-                      value: "commercial",
+                SizedBox(
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(
+                      Icons.auto_awesome,
+                      color: Colors.white,
                     ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  HoverCard(
-                    child: _buildSourceCard(
-                      icon: Icons.public,
-                      title: "Open World",
-                      subtitle:
-                          "Let AI creates outfits from the entire fashion world",
-                      value: "open_world",
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  SizedBox(
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.auto_awesome,
-                          color: Colors.white),
-                      label: const Text(
-                        "Generate Outfit",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                    label: const Text(
+                      'Generate Outfit',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.purpleDeep,
-                        minimumSize: const Size(double.infinity, 56),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      onPressed: () async {
-                        setState(() {
-                          isLoading = true;
-                        });
-
-                        final optionsResult =
-                            await apiService.generateOutfitOptions(
-                          userImagePath: widget.imagePath,
-                          styleType: widget.styleType,
-                          wardrobeSource: selectedSource,
-                        );
-
-                        if (optionsResult == null) {
-                          setState(() {
-                            isLoading = false;
-                          });
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Failed to generate outfit",
-                              ),
-                            ),
-                          );
-
-                          return;
-                        }
-
-                        final recommendation =
-                            optionsResult["data"]
-                                ["recommendations"][0];
-
-                        final imagePrompt =
-                            recommendation[
-                                "image_generation_prompt"];
-
-                        final stylingAdvice =
-                            recommendation["styling_advice"];
-
-                        final imageResult =
-                            await apiService.generateSelectedOutfit(
-                          prompt: imagePrompt,
-                          userImagePath: widget.imagePath,
-                        );
-
-                        setState(() {
-                          isLoading = false;
-                        });
-
-                        if (imageResult == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Failed to generate image",
-                              ),
-                            ),
-                          );
-
-                          return;
-                        }
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => OutfitResultScreen(
-                              imagePath: imageResult["image_url"],
-                              styleType: widget.styleType,
-                              sourceType: selectedSource,
-                              stylingAdvice: stylingAdvice,
-                            ),
-                          ),
-                        );
-                      },
                     ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          AppTheme.purpleDeep,
+                      foregroundColor: Colors.white,
+                      minimumSize:
+                          const Size(double.infinity, 56),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed:
+                        isLoading ? null : generateOutfit,
                   ),
+                ),
 
-                  const SizedBox(height: 20),
-                ],
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSelectedStyleCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.purpleSoft.withOpacity(0.4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color:
+                AppTheme.purpleDeep.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.check_circle,
+            color: AppTheme.purpleAccent,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Selected Style: '
+              '${widget.styleType.toUpperCase()}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.inkDark,
               ),
             ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -330,138 +586,444 @@ class _SelectWardrobeSourceScreenState
     required String subtitle,
     required String value,
   }) {
-    final bool isSelected = selectedSource == value;
+    final bool isSelected =
+        selectedSource == value;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius:
+            BorderRadius.circular(20),
+        onTap: () {
+          selectSource(value);
+        },
+        child: AnimatedContainer(
+          duration:
+              const Duration(milliseconds: 250),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppTheme.purpleAccent
+                    .withOpacity(0.12)
+                : Colors.white,
+            borderRadius:
+                BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? AppTheme.purpleAccent
+                  : AppTheme.purpleSoft
+                      .withOpacity(0.35),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isSelected
+                    ? AppTheme.purpleDeep
+                        .withOpacity(0.18)
+                    : Colors.black
+                        .withOpacity(0.05),
+                blurRadius:
+                    isSelected ? 12 : 8,
+                offset:
+                    const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.purpleDeep
+                          .withOpacity(0.10)
+                      : AppTheme.bgLight,
+                  borderRadius:
+                      BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  size: 34,
+                  color: isSelected
+                      ? AppTheme.purpleDeep
+                      : AppTheme.inkMuted,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  mainAxisSize:
+                      MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style:
+                          const TextStyle(
+                        fontSize: 18,
+                        fontWeight:
+                            FontWeight.bold,
+                        color:
+                            AppTheme.inkDark,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style:
+                          const TextStyle(
+                        color:
+                            AppTheme.inkMuted,
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              AnimatedSwitcher(
+                duration:
+                    const Duration(
+                  milliseconds: 200,
+                ),
+                child: isSelected
+                    ? const Icon(
+                        Icons.check_circle,
+                        key: ValueKey(
+                          'selected',
+                        ),
+                        color:
+                            AppTheme.purpleAccent,
+                        size: 24,
+                      )
+                    : const SizedBox(
+                        key: ValueKey(
+                          'unselected',
+                        ),
+                        width: 24,
+                        height: 24,
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPersonalWardrobe() {
+    if (isWardrobeLoading) {
+      return Container(
+        padding:
+            const EdgeInsets.all(30),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius:
+              BorderRadius.circular(20),
+        ),
+        child: const Center(
+          child:
+              CircularProgressIndicator(
+            color:
+                AppTheme.purpleAccent,
+          ),
+        ),
+      );
+    }
+
+    if (wardrobe.isEmpty) {
+      return Container(
+        padding:
+            const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius:
+              BorderRadius.circular(20),
+          border: Border.all(
+            color: AppTheme.purpleSoft
+                .withOpacity(0.35),
+          ),
+        ),
+        child: const Column(
+          children: [
+            Icon(
+              Icons.checkroom_outlined,
+              size: 50,
+              color: AppTheme.purpleSoft,
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Your wardrobe is empty.',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight:
+                    FontWeight.bold,
+                color:
+                    AppTheme.inkDark,
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Add clothing items to your wardrobe '
+              'before generating a personal outfit.',
+              textAlign:
+                  TextAlign.center,
+              style: TextStyle(
+                color:
+                    AppTheme.inkMuted,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Select Wardrobe Items',
+          style: TextStyle(
+            fontSize: 21,
+            fontWeight: FontWeight.w900,
+            color: AppTheme.inkDark,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'You can select specific clothes, or leave '
+          'everything unselected and let the AI stylist '
+          'choose from your entire wardrobe.',
+          style: TextStyle(
+            color: AppTheme.inkMuted,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics:
+              const NeverScrollableScrollPhysics(),
+          gridDelegate:
+              const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.72,
+          ),
+          itemCount: wardrobe.length,
+          itemBuilder:
+              (context, index) {
+            final item =
+                wardrobe[index];
+
+            return _buildWardrobeItemCard(
+              item,
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWardrobeItemCard(
+    WardrobeItem item,
+  ) {
+    final bool isSelected =
+        selectedItemIds.contains(item.id);
+
+    final String imagePath =
+        item.thumbnailPath?.isNotEmpty == true
+            ? item.thumbnailPath!
+            : item.imagePath;
+
+    final String imageUrl =
+        '${WardrobeService.baseUrl}$imagePath';
+
+    return GestureDetector(
       onTap: () {
-        setState(() {
-          selectedSource = value;
-        });
+        toggleWardrobeItem(item.id);
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.all(20),
+        duration:
+            const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.purpleAccent.withOpacity(0.12)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.white,
+          borderRadius:
+              BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
                 ? AppTheme.purpleAccent
-                : AppTheme.purpleSoft.withOpacity(0.35),
-            width: 2,
+                : AppTheme.purpleSoft
+                    .withOpacity(0.25),
+            width: isSelected ? 2.5 : 1,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppTheme.purpleDeep.withOpacity(0.18),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppTheme.purpleDeep.withOpacity(0.10)
-                    : AppTheme.bgLight,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                icon,
-                size: 34,
-                color: isSelected
-                    ? AppTheme.purpleDeep
-                    : AppTheme.inkMuted,
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppTheme.purpleDeep
+                      .withOpacity(0.18)
+                  : Colors.black
+                      .withOpacity(0.05),
+              blurRadius:
+                  isSelected ? 12 : 7,
+              offset:
+                  const Offset(0, 4),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.inkDark,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: AppTheme.inkMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              const Icon(
-                Icons.check_circle,
-                color: AppTheme.purpleAccent,
-                size: 24,
-              ),
           ],
         ),
-      ),
-    );
-  }
-}
+        child: ClipRRect(
+          borderRadius:
+              BorderRadius.circular(17),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      cacheWidth: 300,
+                      cacheHeight: 375,
+                      filterQuality:
+                          FilterQuality.low,
+                      errorBuilder: (
+                        context,
+                        error,
+                        stackTrace,
+                      ) {
+                        return Container(
+                          color:
+                              AppTheme.bgLight,
+                          child:
+                              const Icon(
+                            Icons
+                                .broken_image_outlined,
+                            size: 40,
+                            color:
+                                AppTheme.inkMuted,
+                          ),
+                        );
+                      },
+                      loadingBuilder: (
+                        context,
+                        child,
+                        loadingProgress,
+                      ) {
+                        if (loadingProgress ==
+                            null) {
+                          return child;
+                        }
 
-class HoverCard extends StatefulWidget {
-  final Widget child;
-
-  const HoverCard({
-    super.key,
-    required this.child,
-  });
-
-  @override
-  State<HoverCard> createState() => _HoverCardState();
-}
-
-class _HoverCardState extends State<HoverCard> {
-  bool isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) {
-        setState(() {
-          isHovered = true;
-        });
-      },
-      onExit: (_) {
-        setState(() {
-          isHovered = false;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: Matrix4.translationValues(
-          0,
-          isHovered ? -8 : 0,
-          0,
+                        return const Center(
+                          child:
+                              CircularProgressIndicator(
+                            color:
+                                AppTheme
+                                    .purpleAccent,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.all(
+                            10),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment
+                              .start,
+                      children: [
+                        Text(
+                          item.category,
+                          maxLines: 1,
+                          overflow:
+                              TextOverflow
+                                  .ellipsis,
+                          style:
+                              const TextStyle(
+                            fontWeight:
+                                FontWeight.bold,
+                            color:
+                                AppTheme
+                                    .inkDark,
+                          ),
+                        ),
+                        const SizedBox(
+                            height: 3),
+                        Text(
+                          item.color,
+                          maxLines: 1,
+                          overflow:
+                              TextOverflow
+                                  .ellipsis,
+                          style:
+                              const TextStyle(
+                            fontSize: 12,
+                            color:
+                                AppTheme
+                                    .inkMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: AnimatedContainer(
+                  duration:
+                      const Duration(
+                    milliseconds: 200,
+                  ),
+                  width: 30,
+                  height: 30,
+                  decoration:
+                      BoxDecoration(
+                    color: isSelected
+                        ? AppTheme
+                            .purpleAccent
+                        : Colors.white
+                            .withOpacity(
+                                0.9),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? AppTheme
+                              .purpleAccent
+                          : AppTheme
+                              .purpleSoft
+                              .withOpacity(
+                                  0.5),
+                    ),
+                  ),
+                  child: isSelected
+                      ? const Icon(
+                          Icons.check,
+                          color:
+                              Colors.white,
+                          size: 19,
+                        )
+                      : null,
+                ),
+              ),
+            ],
+          ),
         ),
-        child: widget.child,
       ),
     );
   }
 }
-

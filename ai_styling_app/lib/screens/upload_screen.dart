@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import '../screens/wardrobe_source_screen.dart';
-import '../services/api_service.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../screens/wardrobe_source_screen.dart';
+import '../services/api_service.dart';
+
 // ============================================================
-// App-wide purple theme (same as redesigned HomeScreen)
+// App-wide purple theme
 // ============================================================
+
 class AppTheme {
   static const Color purpleDeep = Color(0xFF4C2FD6);
   static const Color purpleAccent = Color(0xFF6C48F2);
@@ -15,46 +19,9 @@ class AppTheme {
   static const Color inkMuted = Color(0xFF5A5B7E);
 }
 
-class HoverCard extends StatefulWidget {
-  final Widget child;
-
-  const HoverCard({
-    super.key,
-    required this.child,
-  });
-
-  @override
-  State<HoverCard> createState() => _HoverCardState();
-}
-
-class _HoverCardState extends State<HoverCard> {
-  bool isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) {
-        setState(() {
-          isHovered = true;
-        });
-      },
-      onExit: (_) {
-        setState(() {
-          isHovered = false;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: Matrix4.translationValues(
-          0,
-          isHovered ? -8 : 0,
-          0,
-        ),
-        child: widget.child,
-      ),
-    );
-  }
-}
+// ============================================================
+// Upload Screen
+// ============================================================
 
 class UploadScreen extends StatefulWidget {
   const UploadScreen({super.key});
@@ -67,42 +34,239 @@ class _UploadScreenState extends State<UploadScreen> {
   bool isFormalHovered = false;
   bool isLeisureHovered = false;
 
-  String selectedStyle = "";
+  String selectedStyle = '';
 
   bool analysisCompleted = false;
+  bool isLoading = false;
 
   final ApiService apiService = ApiService();
-
-  Map<String, dynamic>? visionResult;
-
-  bool isLoading = false;
+  final ImagePicker picker = ImagePicker();
 
   XFile? selectedImage;
 
-  final ImagePicker picker = ImagePicker();
+  Map<String, dynamic>? visionResult;
+
+  // ============================================================
+  // PICK IMAGE
+  // ============================================================
 
   Future<void> pickImage() async {
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
+    try {
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
 
-    if (image != null) {
+      if (image == null || !mounted) {
+        return;
+      }
+
       setState(() {
         selectedImage = image;
+        visionResult = null;
+        analysisCompleted = false;
+        selectedStyle = '';
       });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not select image: $e'),
+        ),
+      );
     }
   }
+
+  // ============================================================
+  // ANALYZE IMAGE
+  // ============================================================
+
+  Future<void> analyzeSelectedImage(String styleType) async {
+    if (selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please upload an image first.'),
+        ),
+      );
+      return;
+    }
+
+    if (isLoading) {
+      return;
+    }
+
+    setState(() {
+      selectedStyle = styleType;
+      isLoading = true;
+      analysisCompleted = false;
+      visionResult = null;
+    });
+
+    try {
+      final result = await apiService.analyzeImage(
+        imageFile: selectedImage!,
+        styleType: styleType,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (result == null) {
+        setState(() {
+          isLoading = false;
+          analysisCompleted = false;
+          visionResult = null;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Image analysis failed. Please check the server and try again.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      setState(() {
+        visionResult = result;
+        analysisCompleted = true;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        isLoading = false;
+        analysisCompleted = false;
+        visionResult = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Analysis failed: $e'),
+        ),
+      );
+    }
+  }
+
+  // ============================================================
+  // CONTINUE TO WARDROBE SOURCE
+  // ============================================================
+
+  void continueToWardrobeSource() {
+    final userImagePath =
+        visionResult?['user_image_path']?.toString();
+
+    if (userImagePath == null || userImagePath.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'User image path was not returned by the server.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectWardrobeSourceScreen(
+          imagePath: userImagePath,
+          styleType: selectedStyle,
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // IMAGE PREVIEW
+  // ============================================================
+
+  Widget buildImagePreview() {
+    if (selectedImage == null) {
+      return const Center(
+        child: Icon(
+          Icons.add_a_photo_outlined,
+          size: 80,
+          color: AppTheme.purpleSoft,
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: FutureBuilder<Uint8List>(
+        future: selectedImage!.readAsBytes(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: AppTheme.purpleAccent,
+              ),
+            );
+          }
+
+          if (snapshot.hasError ||
+              !snapshot.hasData ||
+              snapshot.data!.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.broken_image_outlined,
+                    size: 50,
+                    color: AppTheme.inkMuted,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Unable to display image',
+                    style: TextStyle(
+                      color: AppTheme.inkMuted,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Image.memory(
+            snapshot.data!,
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.contain,
+          );
+        },
+      ),
+    );
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.inkDark),
+        iconTheme: const IconThemeData(
+          color: AppTheme.inkDark,
+        ),
       ),
-      extendBodyBehindAppBar: true,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -110,7 +274,10 @@ class _UploadScreenState extends State<UploadScreen> {
           children: [
             const SizedBox(height: 60),
 
-            // ---------- AI Powered badge ----------
+            // ==================================================
+            // AI POWERED BADGE
+            // ==================================================
+
             Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -127,7 +294,11 @@ class _UploadScreenState extends State<UploadScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.auto_awesome, size: 16, color: AppTheme.purpleDeep),
+                    Icon(
+                      Icons.auto_awesome,
+                      size: 16,
+                      color: AppTheme.purpleDeep,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'AI POWERED',
@@ -142,11 +313,15 @@ class _UploadScreenState extends State<UploadScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
 
-            // ---------- Main headline ----------
+            // ==================================================
+            // TITLE
+            // ==================================================
+
             const Text(
-              "Upload Your Photo",
+              'Upload Your Photo',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 30,
@@ -154,9 +329,9 @@ class _UploadScreenState extends State<UploadScreen> {
                 color: AppTheme.inkDark,
               ),
             ),
+
             const SizedBox(height: 10),
 
-            // Accent underline like the home screen
             const Center(
               child: SizedBox(
                 width: 48,
@@ -164,15 +339,18 @@ class _UploadScreenState extends State<UploadScreen> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: AppTheme.purpleAccent,
-                    borderRadius: BorderRadius.all(Radius.circular(2)),
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(2),
+                    ),
                   ),
                 ),
               ),
             ),
+
             const SizedBox(height: 16),
 
             const Text(
-              "Upload a clear image and choose your desired styling mode.",
+              'Upload a clear image and choose your desired styling mode.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppTheme.inkMuted,
@@ -182,7 +360,10 @@ class _UploadScreenState extends State<UploadScreen> {
 
             const SizedBox(height: 30),
 
-            // ---------- Photo container ----------
+            // ==================================================
+            // IMAGE CONTAINER
+            // ==================================================
+
             Container(
               height: 260,
               decoration: BoxDecoration(
@@ -201,39 +382,36 @@ class _UploadScreenState extends State<UploadScreen> {
                   ),
                 ],
               ),
-              child: selectedImage == null
-                  ? const Center(
-                      child: Icon(
-                        Icons.add_a_photo_outlined,
-                        size: 80,
-                        color: AppTheme.purpleSoft,
-                      ),
-                    )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Image.network(
-                        selectedImage!.path,
-                        fit: BoxFit.contain,
-                        width: double.infinity,
-                      ),
-                    ),
+              child: buildImagePreview(),
             ),
 
             const SizedBox(height: 20),
 
-            // ---------- Upload Image button ----------
+            // ==================================================
+            // UPLOAD BUTTON
+            // ==================================================
+
             ElevatedButton.icon(
-              onPressed: () {
-                pickImage();
-              },
-              icon: const Icon(Icons.upload, color: Colors.white),
+              onPressed: isLoading ? null : pickImage,
+              icon: const Icon(
+                Icons.upload,
+                color: Colors.white,
+              ),
               label: const Text(
-                "Upload Image",
-                style: TextStyle(color: Colors.white),
+                'Upload Image',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.purpleDeep,
-                minimumSize: const Size(double.infinity, 54),
+                disabledBackgroundColor:
+                    AppTheme.purpleDeep.withOpacity(0.5),
+                minimumSize: const Size(
+                  double.infinity,
+                  54,
+                ),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -243,9 +421,12 @@ class _UploadScreenState extends State<UploadScreen> {
 
             const SizedBox(height: 40),
 
-            // ---------- Choose Style ----------
+            // ==================================================
+            // CHOOSE STYLE
+            // ==================================================
+
             const Text(
-              "Choose Style",
+              'Choose Style',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
@@ -257,6 +438,10 @@ class _UploadScreenState extends State<UploadScreen> {
 
             Row(
               children: [
+                // ==================================================
+                // FORMAL
+                // ==================================================
+
                 Expanded(
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
@@ -271,27 +456,9 @@ class _UploadScreenState extends State<UploadScreen> {
                       });
                     },
                     child: GestureDetector(
-                      onTap: () async {
-                        if (selectedImage == null) {
-                          return;
-                        }
-
-                        setState(() {
-                          selectedStyle = "formal";
-                          isLoading = true;
-                        });
-
-                        final result = await apiService.analyzeImage(
-                          imageFile: selectedImage!,
-                          styleType: "formal",
-                        );
-
-                        setState(() {
-                          visionResult = result;
-                          analysisCompleted = result != null;
-                          isLoading = false;
-                        });
-                      },
+                      onTap: isLoading
+                          ? null
+                          : () => analyzeSelectedImage('formal'),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         transform: Matrix4.translationValues(
@@ -301,20 +468,23 @@ class _UploadScreenState extends State<UploadScreen> {
                         ),
                         height: 120,
                         decoration: BoxDecoration(
-                          color: selectedStyle == "formal"
+                          color: selectedStyle == 'formal'
                               ? AppTheme.purpleAccent.withOpacity(0.12)
                               : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: selectedStyle == "formal"
+                            color: selectedStyle == 'formal'
                                 ? AppTheme.purpleAccent
-                                : AppTheme.purpleSoft.withOpacity(0.35),
-                            width: selectedStyle == "formal" ? 2 : 1,
+                                : AppTheme.purpleSoft
+                                    .withOpacity(0.35),
+                            width:
+                                selectedStyle == 'formal' ? 2 : 1,
                           ),
-                          boxShadow: selectedStyle == "formal"
+                          boxShadow: selectedStyle == 'formal'
                               ? [
                                   BoxShadow(
-                                    color: AppTheme.purpleDeep.withOpacity(0.18),
+                                    color: AppTheme.purpleDeep
+                                        .withOpacity(0.18),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
@@ -327,21 +497,21 @@ class _UploadScreenState extends State<UploadScreen> {
                             Icon(
                               Icons.business_center,
                               size: 40,
-                              color: selectedStyle == "formal"
+                              color: selectedStyle == 'formal'
                                   ? AppTheme.purpleDeep
                                   : AppTheme.inkMuted,
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              "Formal",
+                              'Formal',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: selectedStyle == "formal"
+                                color: selectedStyle == 'formal'
                                     ? AppTheme.purpleDeep
                                     : AppTheme.inkDark,
                               ),
                             ),
-                            if (selectedStyle == "formal")
+                            if (selectedStyle == 'formal')
                               const Padding(
                                 padding: EdgeInsets.only(top: 4),
                                 child: Icon(
@@ -359,6 +529,10 @@ class _UploadScreenState extends State<UploadScreen> {
 
                 const SizedBox(width: 16),
 
+                // ==================================================
+                // LEISURE
+                // ==================================================
+
                 Expanded(
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
@@ -373,27 +547,9 @@ class _UploadScreenState extends State<UploadScreen> {
                       });
                     },
                     child: GestureDetector(
-                      onTap: () async {
-                        if (selectedImage == null) {
-                          return;
-                        }
-
-                        setState(() {
-                          selectedStyle = "leisure";
-                          isLoading = true;
-                        });
-
-                        final result = await apiService.analyzeImage(
-                          imageFile: selectedImage!,
-                          styleType: "leisure",
-                        );
-
-                        setState(() {
-                          visionResult = result;
-                          analysisCompleted = result != null;
-                          isLoading = false;
-                        });
-                      },
+                      onTap: isLoading
+                          ? null
+                          : () => analyzeSelectedImage('leisure'),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         transform: Matrix4.translationValues(
@@ -403,20 +559,23 @@ class _UploadScreenState extends State<UploadScreen> {
                         ),
                         height: 120,
                         decoration: BoxDecoration(
-                          color: selectedStyle == "leisure"
+                          color: selectedStyle == 'leisure'
                               ? AppTheme.purpleAccent.withOpacity(0.12)
                               : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: selectedStyle == "leisure"
+                            color: selectedStyle == 'leisure'
                                 ? AppTheme.purpleAccent
-                                : AppTheme.purpleSoft.withOpacity(0.35),
-                            width: selectedStyle == "leisure" ? 2 : 1,
+                                : AppTheme.purpleSoft
+                                    .withOpacity(0.35),
+                            width:
+                                selectedStyle == 'leisure' ? 2 : 1,
                           ),
-                          boxShadow: selectedStyle == "leisure"
+                          boxShadow: selectedStyle == 'leisure'
                               ? [
                                   BoxShadow(
-                                    color: AppTheme.purpleDeep.withOpacity(0.18),
+                                    color: AppTheme.purpleDeep
+                                        .withOpacity(0.18),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
@@ -429,21 +588,21 @@ class _UploadScreenState extends State<UploadScreen> {
                             Icon(
                               Icons.weekend,
                               size: 40,
-                              color: selectedStyle == "leisure"
+                              color: selectedStyle == 'leisure'
                                   ? AppTheme.purpleDeep
                                   : AppTheme.inkMuted,
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              "Leisure",
+                              'Leisure',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: selectedStyle == "leisure"
+                                color: selectedStyle == 'leisure'
                                     ? AppTheme.purpleDeep
                                     : AppTheme.inkDark,
                               ),
                             ),
-                            if (selectedStyle == "leisure")
+                            if (selectedStyle == 'leisure')
                               const Padding(
                                 padding: EdgeInsets.only(top: 4),
                                 child: Icon(
@@ -461,12 +620,14 @@ class _UploadScreenState extends State<UploadScreen> {
               ],
             ),
 
-            const SizedBox(height: 30),
+            // ==================================================
+            // LOADING
+            // ==================================================
 
             if (isLoading) ...[
               const SizedBox(height: 30),
 
-              Center(
+              const Center(
                 child: CircularProgressIndicator(
                   color: AppTheme.purpleAccent,
                   strokeWidth: 4,
@@ -477,236 +638,42 @@ class _UploadScreenState extends State<UploadScreen> {
 
               const Center(
                 child: Text(
-                  "Analyzing your style...",
+                  'Analyzing your style...',
                   style: TextStyle(
                     color: AppTheme.inkMuted,
                   ),
                 ),
               ),
-
-              const SizedBox(height: 30),
             ],
 
-            if (analysisCompleted) ...[
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.purpleDeep.withOpacity(0.06),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ---------- Vision Analysis header with badge ----------
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.bgLight,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.auto_awesome,
-                            color: AppTheme.purpleDeep,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          "Vision Analysis",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.inkDark,
-                          ),
-                        ),
-                      ],
-                    ),
+            // ==================================================
+            // VISION ANALYSIS
+            // ==================================================
 
-                    const SizedBox(height: 20),
+            if (analysisCompleted && visionResult != null) ...[
+              const SizedBox(height: 30),
 
-                    const Text(
-                      "Detected Features",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.inkDark,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.bgLight,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Text(
-                        """
-Gender: ${visionResult?['profile']?['user_features']?['gender'] ?? ""}
-Skin Tone: ${visionResult?['profile']?['user_features']?['skin_tone'] ?? ""}
-Hairstyle: ${visionResult?['profile']?['user_features']?['hairstyle'] ?? ""}
-Body Type: ${visionResult?['profile']?['user_features']?['body_type'] ?? ""}
-                        """,
-                        style: const TextStyle(color: AppTheme.inkDark),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    const Text(
-                      "Advantages",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.inkDark,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children:
-                          (visionResult?["profile"]?["analysis"]?["advantages"]
-                                      as List<dynamic>? ??
-                                  [])
-                              .map(
-                                (item) => Padding(
-                                  padding: const EdgeInsets.only(
-                                    bottom: 8,
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Icon(
-                                        Icons.check_circle,
-                                        color: AppTheme.purpleAccent,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          item.toString(),
-                                          style: const TextStyle(
-                                            color: AppTheme.inkMuted,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    const Text(
-                      "Improvements",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.inkDark,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children:
-                          (visionResult?["profile"]?["analysis"]?["areas_for_improvement"]
-                                      as List<dynamic>? ??
-                                  [])
-                              .map(
-                                (item) => Padding(
-                                  padding: const EdgeInsets.only(
-                                    bottom: 8,
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Icon(
-                                        Icons.warning_amber_rounded,
-                                        color: Colors.orange,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          item.toString(),
-                                          style: const TextStyle(
-                                            color: AppTheme.inkMuted,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    const Text(
-                      "GPT Stylist Comments",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.inkDark,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.bgLight,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Text(
-                        visionResult?["profile"]?["comments"] ?? "",
-                        style: const TextStyle(color: AppTheme.inkDark),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildVisionAnalysis(),
 
               const SizedBox(height: 30),
 
+              // This does NOT generate the outfit yet.
+              // It takes the user to wardrobe-source selection.
               ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => SelectWardrobeSourceScreen(
-                        imagePath: visionResult?["user_image_path"] ?? "",
-                        styleType: selectedStyle,
-                      ),
-                    ),
-                  );
-                },
+                onPressed: continueToWardrobeSource,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.purpleDeep,
-                  minimumSize: const Size(double.infinity, 54),
+                  minimumSize: const Size(
+                    double.infinity,
+                    54,
+                  ),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 child: const Text(
-                  "Continue to Wardrobe Selection",
+                  'Continue to Wardrobe Selection',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -722,5 +689,240 @@ Body Type: ${visionResult?['profile']?['user_features']?['body_type'] ?? ""}
       ),
     );
   }
-}
 
+  // ============================================================
+  // VISION ANALYSIS UI
+  // ============================================================
+
+  Widget _buildVisionAnalysis() {
+    final userFeatures =
+        visionResult?['profile']?['user_features']
+            as Map<String, dynamic>?;
+
+    final analysis =
+        visionResult?['profile']?['analysis']
+            as Map<String, dynamic>?;
+
+    final advantages =
+        analysis?['advantages'] as List<dynamic>? ?? [];
+
+    final improvements =
+        analysis?['areas_for_improvement'] as List<dynamic>? ?? [];
+
+    final comments =
+        visionResult?['profile']?['comments']?.toString() ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.purpleDeep.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ==================================================
+          // HEADER
+          // ==================================================
+
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.bgLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: AppTheme.purpleDeep,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Vision Analysis',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.inkDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // ==================================================
+          // DETECTED FEATURES
+          // ==================================================
+
+          const Text(
+            'Detected Features',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.inkDark,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.bgLight,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              'Gender: ${userFeatures?['gender'] ?? ''}\n'
+              'Skin Tone: ${userFeatures?['skin_tone'] ?? ''}\n'
+              'Hairstyle: ${userFeatures?['hairstyle'] ?? ''}\n'
+              'Body Type: ${userFeatures?['body_type'] ?? ''}',
+              style: const TextStyle(
+                color: AppTheme.inkDark,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // ==================================================
+          // ADVANTAGES
+          // ==================================================
+
+          const Text(
+            'Advantages',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.inkDark,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          _buildBulletList(
+            advantages,
+            Icons.check_circle,
+            AppTheme.purpleAccent,
+          ),
+
+          const SizedBox(height: 20),
+
+          // ==================================================
+          // IMPROVEMENTS
+          // ==================================================
+
+          const Text(
+            'Improvements',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.inkDark,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          _buildBulletList(
+            improvements,
+            Icons.warning_amber_rounded,
+            Colors.orange,
+          ),
+
+          const SizedBox(height: 20),
+
+          // ==================================================
+          // GPT STYLIST COMMENTS
+          // ==================================================
+
+          const Text(
+            'GPT Stylist Comments',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.inkDark,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.bgLight,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              comments.isEmpty
+                  ? 'No additional comments.'
+                  : comments,
+              style: const TextStyle(
+                color: AppTheme.inkDark,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // BULLET LIST
+  // ============================================================
+
+  Widget _buildBulletList(
+    List<dynamic> items,
+    IconData icon,
+    Color iconColor,
+  ) {
+    if (items.isEmpty) {
+      return const Text(
+        'None detected.',
+        style: TextStyle(
+          color: AppTheme.inkMuted,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: items
+          .map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    icon,
+                    color: iconColor,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      item.toString(),
+                      style: const TextStyle(
+                        color: AppTheme.inkMuted,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}

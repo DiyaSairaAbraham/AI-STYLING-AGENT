@@ -1,47 +1,30 @@
 class WardrobeItem {
-
   final String id;
   final String imagePath;
-
+  final String? thumbnailPath;
   final String category;
   final String color;
   final String style;
 
-
-  WardrobeItem({
-
+  const WardrobeItem({
     required this.id,
     required this.imagePath,
+    required this.thumbnailPath,
     required this.category,
     required this.color,
     required this.style,
-
   });
 
-
-
   factory WardrobeItem.fromJson(
-      Map<String,dynamic> json
-  ){
-
+    Map<String, dynamic> json,
+  ) {
     return WardrobeItem(
-
-      id: json["id_baju"],
-
-      imagePath:
-          json["image_path"],
-
-      category:
-          json["category"],
-
-      color:
-          json["color"],
-
-      style:
-          json["style"],
-
+      id: json['id_baju']?.toString() ?? '',
+      imagePath: json['image_path']?.toString() ?? '',
+      thumbnailPath: json['thumbnail_path']?.toString(),
+      category: json['category']?.toString() ?? 'Unknown',
+      color: json['color']?.toString() ?? 'Unknown',
+      style: json['style']?.toString() ?? 'Unknown',
     );
-
   }
-
 }

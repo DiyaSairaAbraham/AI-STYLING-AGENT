@@ -1,239 +1,151 @@
 import json
 import os
+from typing import Any
 
-
-from agents.vision_agent import analyze_user_image
-from utils.wardrobe_manager import build_wardrobe_database
-from agents.stylist_agent import generate_style_recommendation
 from agents.image_agent import generate_outfit_image
-
+from agents.stylist_agent import generate_style_recommendation
+from agents.vision_agent import analyze_user_image
 from utils.logger import log
-
+from utils.wardrobe_manager import build_wardrobe_database
 
 
 OUTPUT_JSON = "outputs/json"
-
 OUTPUT_IMAGES = "outputs/images"
 
 
-
-
 def run_full_pipeline(
-        user_image_path: str,
-        wardrobe_path: str
-):
+    user_image_path: str,
+    wardrobe_path: str,
+    style_type: str,
+    wardrobe_source: str,
+) -> dict[str, Any]:
 
-
-    log(
-        "Starting AI Stylist Pipeline"
-    )
-
+    log("Starting AI Stylist Pipeline")
 
     os.makedirs(
         OUTPUT_JSON,
-        exist_ok=True
+        exist_ok=True,
     )
-
 
     os.makedirs(
         OUTPUT_IMAGES,
-        exist_ok=True
+        exist_ok=True,
     )
 
-
-
-    # =========================
-    # MODULE 1
-    # Vision
-    # =========================
-
+    # =====================================================
+    # MODULE 1 - VISION
+    # =====================================================
 
     m1 = analyze_user_image(
-        user_image_path
+        image_path=user_image_path,
+        style_type=style_type,
     )
 
-
+    user_profile = m1.model_dump()
 
     with open(
         f"{OUTPUT_JSON}/user_profile.json",
         "w",
-        encoding="utf-8"
-    ) as f:
-
+        encoding="utf-8",
+    ) as file:
 
         json.dump(
-
-            m1.model_dump(),
-
-            f,
-
+            user_profile,
+            file,
             indent=4,
-
-            ensure_ascii=False
-
+            ensure_ascii=False,
         )
 
+    log("Vision completed")
 
-    log(
-        "Vision completed"
-    )
-
-
-
-    # =========================
-    # MODULE 2
-    # Wardrobe
-    # =========================
-
+    # =====================================================
+    # MODULE 2 - WARDROBE
+    # =====================================================
 
     wardrobe_items = build_wardrobe_database(
-
         wardrobe_path
-
     )
 
+    log("Wardrobe completed")
 
-    log(
-        "Wardrobe completed"
-    )
-
-
-
-    # =========================
-    # MODULE 3
-    # Stylist
-    # =========================
-
+    # =====================================================
+    # MODULE 3 - STYLIST
+    # =====================================================
 
     recommendation = generate_style_recommendation(
-
-        m1.model_dump(),
-
-        wardrobe_items
-
+        module1_data=user_profile,
+        wardrobe_items=wardrobe_items,
+        style_type=style_type,
+        wardrobe_source=wardrobe_source,
+        selected_item_ids=[],
     )
 
-
+    recommendation_data = recommendation.model_dump()
 
     with open(
-
         f"{OUTPUT_JSON}/recommendation.json",
-
         "w",
-
-        encoding="utf-8"
-
-    ) as f:
-
+        encoding="utf-8",
+    ) as file:
 
         json.dump(
-
-            recommendation.model_dump(),
-
-            f,
-
+            recommendation_data,
+            file,
             indent=4,
-
-            ensure_ascii=False
-
+            ensure_ascii=False,
         )
 
+    log("Recommendation completed")
 
+    # =====================================================
+    # MODULE 4 - IMAGE GENERATION
+    # =====================================================
 
-    log(
-        "Recommendation completed"
-    )
+    generated_images: list[dict[str, str]] = []
 
+    if not recommendation.recommendations:
+        raise ValueError(
+            "Stylist returned no outfit recommendation."
+        )
 
+    # The stylist is configured to return exactly one outfit.
+    outfit = recommendation.recommendations[0]
 
-    # =========================
-    # MODULE 4
-    # Image Generation
-    # =========================
+    try:
 
+        image_path = generate_outfit_image(
+            prompt=outfit.image_generation_prompt,
+            user_image_path=user_image_path,
+            output_path=(
+                f"{OUTPUT_IMAGES}/recommended_outfit.png"
+            ),
+        )
 
-    generated_images=[]
+        generated_images.append(
+            {
+                "category": outfit.category,
+                "path": image_path,
+            }
+        )
 
+    except Exception as exc:
 
+        log(
+            f"Image generation failed for "
+            f"{outfit.category}: {exc}"
+        )
 
-    for index, outfit in enumerate(
+        generated_images.append(
+            {
+                "category": outfit.category,
+                "error": str(exc),
+            }
+        )
 
-        recommendation.recommendations,
-
-        start=1
-
-    ):
-
-
-        try:
-
-
-            image_path = generate_outfit_image(
-
-                prompt=
-                outfit.image_generation_prompt,
-
-                user_image_path=
-                user_image_path,
-
-                output_path=
-                f"{OUTPUT_IMAGES}/recommended_outfit_{index}.png"
-
-            )
-
-
-
-            generated_images.append(
-
-                {
-                    "category":
-                    outfit.category,
-
-                    "path":
-                    image_path
-                }
-
-            )
-
-
-
-        except Exception as e:
-
-
-            generated_images.append(
-
-                {
-                    "category":
-                    outfit.category,
-
-                    "error":
-                    str(e)
-                }
-
-            )
-
-
-
-    log(
-        "Pipeline completed successfully"
-    )
-
-
+    log("Pipeline completed successfully")
 
     return {
-
-
-        "user_profile":
-        m1.model_dump(),
-
-
-
-        "recommendations":
-        recommendation.model_dump(),
-
-
-
-        "images":
-        generated_images
-
+        "user_profile": user_profile,
+        "recommendations": recommendation_data,
+        "images": generated_images,
     }

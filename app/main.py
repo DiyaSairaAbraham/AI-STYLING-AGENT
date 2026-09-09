@@ -4,31 +4,28 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.routers import commercial
 from app.routers import health
+from app.routers import image_generation
+from app.routers import recommendation
 from app.routers import vision
 from app.routers import wardrobe
-from app.routers import recommendation
-from app.routers import image_generation
 
-from app.routers import commercial
+
 # =====================================================
-# Ensure required folders exist
+# Required directories
 # =====================================================
 
-os.makedirs(
+REQUIRED_DIRECTORIES: tuple[str, ...] = (
     "outputs",
-    exist_ok=True,
-)
-
-os.makedirs(
     "outputs/images",
-    exist_ok=True,
+    "wardrobe",
+    "wardrobe_thumbnails",
+    "database/commercial",
 )
 
-os.makedirs(
-    "wardrobe",
-    exist_ok=True,
-)
+for directory in REQUIRED_DIRECTORIES:
+    os.makedirs(directory, exist_ok=True)
 
 
 # =====================================================
@@ -58,8 +55,6 @@ app.add_middleware(
 # Generated outfit images
 # =====================================================
 
-# New clean URL:
-# http://<PC-IP>:8000/images/<filename>.png
 app.mount(
     "/images",
     StaticFiles(
@@ -68,9 +63,7 @@ app.mount(
     name="images",
 )
 
-
-# Keep the existing /outputs route as well.
-# This prevents breaking anything that already uses it.
+# Keep the existing /outputs route for compatibility.
 app.mount(
     "/outputs",
     StaticFiles(
@@ -81,7 +74,7 @@ app.mount(
 
 
 # =====================================================
-# Wardrobe clothing images
+# Personal wardrobe clothing images
 # =====================================================
 
 app.mount(
@@ -92,6 +85,24 @@ app.mount(
     name="clothes",
 )
 
+
+# =====================================================
+# Personal wardrobe thumbnails
+# =====================================================
+
+app.mount(
+    "/clothes-thumbnails",
+    StaticFiles(
+        directory="wardrobe_thumbnails",
+    ),
+    name="clothes-thumbnails",
+)
+
+
+# =====================================================
+# Commercial wardrobe images
+# =====================================================
+
 app.mount(
     "/commercial-images",
     StaticFiles(
@@ -100,8 +111,9 @@ app.mount(
     name="commercial-images",
 )
 
+
 # =====================================================
-# Routers
+# API routers
 # =====================================================
 
 app.include_router(
@@ -127,6 +139,7 @@ app.include_router(
 app.include_router(
     commercial.router,
 )
+
 
 # =====================================================
 # Root endpoint

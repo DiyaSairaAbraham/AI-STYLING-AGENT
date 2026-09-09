@@ -1,14 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
-
-import 'package:gal/gal.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:file_saver/file_saver.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
 
 // ============================================================
-// App-wide purple theme (same as the other 3 screens)
+// App-wide purple theme
 // ============================================================
+
 class AppTheme {
   static const Color purpleDeep = Color(0xFF4C2FD6);
   static const Color purpleAccent = Color(0xFF6C48F2);
@@ -18,11 +19,16 @@ class AppTheme {
   static const Color inkMuted = Color(0xFF5A5B7E);
 }
 
+// ============================================================
+// OUTFIT RESULT SCREEN
+// ============================================================
+
 class OutfitResultScreen extends StatelessWidget {
   final String imagePath;
   final String styleType;
   final String sourceType;
   final String stylingAdvice;
+
   const OutfitResultScreen({
     super.key,
     required this.imagePath,
@@ -31,331 +37,477 @@ class OutfitResultScreen extends StatelessWidget {
     required this.stylingAdvice,
   });
 
-  Future<void> downloadImage(
-    BuildContext context,
-  ) async {
+  // ============================================================
+  // DOWNLOAD IMAGE
+  // ============================================================
+
+  Future<void> downloadImage(BuildContext context) async {
     try {
-      final response = await Dio().get(
-        imagePath,
+      final String url = imagePath.trim();
+
+      if (url.isEmpty) {
+        throw Exception('Image URL is empty.');
+      }
+
+      final response = await Dio().get<List<int>>(
+        url,
         options: Options(
           responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(seconds: 60),
+          sendTimeout: const Duration(seconds: 30),
         ),
       );
 
-      final bytes = Uint8List.fromList(response.data);
+      final data = response.data;
+
+      if (data == null || data.isEmpty) {
+        throw Exception('The server returned an empty image.');
+      }
+
+      final Uint8List bytes = Uint8List.fromList(data);
 
       if (kIsWeb) {
         await FileSaver.instance.saveFile(
           name: 'generated_outfit',
           bytes: bytes,
-          ext: 'png',
+          fileExtension: 'png',
           mimeType: MimeType.png,
         );
       } else {
-        await Gal.putImageBytes(
-          bytes,
-        );
+        await Gal.putImageBytes(bytes);
+      }
+
+      if (!context.mounted) {
+        return;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Image downloaded successfully',
-          ),
+          content: Text('Image downloaded successfully'),
+        ),
+      );
+    } on DioException catch (e) {
+      if (!context.mounted) {
+        return;
+      }
+
+      final String message = e.response != null
+          ? 'Image download failed: HTTP ${e.response?.statusCode}'
+          : 'Could not connect to the image server.';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
         ),
       );
     } catch (e) {
+      if (!context.mounted) {
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Download failed: $e',
-          ),
+          content: Text('Download failed: $e'),
         ),
       );
     }
   }
 
+  // ============================================================
+  // BUILD
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.sizeOf(context).width;
+
+    final double imageHeight = screenWidth < 400
+        ? 420.0
+        : screenWidth < 600
+            ? 500.0
+            : 600.0;
+
+    // Keep the decoded bitmap close to the size actually needed.
+    // Avoid very large cache dimensions because AI-generated images
+    // can otherwise consume a large amount of GPU memory on Android.
+    final int imageCacheWidth = screenWidth < 600 ? 600 : 900;
+
+    final int imageCacheHeight = screenWidth < 600 ? 800 : 1100;
+
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
+      extendBodyBehindAppBar: true,
+
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.inkDark),
+        iconTheme: const IconThemeData(
+          color: AppTheme.inkDark,
+        ),
       ),
-      extendBodyBehindAppBar: true,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 60),
 
-            // ---------- AI Powered badge ----------
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: AppTheme.purpleSoft.withOpacity(0.4),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: screenWidth < 400 ? 16 : 24,
+            vertical: 16,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 20),
+
+              // ==================================================
+              // AI POWERED BADGE
+              // ==================================================
+
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
                   ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.auto_awesome,
-                        size: 16, color: AppTheme.purpleDeep),
-                    SizedBox(width: 8),
-                    Text(
-                      'AI POWERED',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.purpleDeep,
-                        letterSpacing: 1.2,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: AppTheme.purpleSoft.withValues(
+                        alpha: 0.4,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // ---------- Main headline ----------
-            const Text(
-              "Your Generated Outfit",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
-                color: AppTheme.inkDark,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Accent underline
-            const Center(
-              child: SizedBox(
-                width: 48,
-                height: 4,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: AppTheme.purpleAccent,
-                    borderRadius:
-                        BorderRadius.all(Radius.circular(2)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome,
+                        size: 16,
+                        color: AppTheme.purpleDeep,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'AI POWERED',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.purpleDeep,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
 
-            // ---------- Style & source chips ----------
-            Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              const SizedBox(height: 20),
+
+              // ==================================================
+              // TITLE
+              // ==================================================
+
+              const Text(
+                'Your Generated Outfit',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.inkDark,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              const Center(
+                child: SizedBox(
+                  width: 48,
+                  height: 4,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppTheme.purpleAccent,
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(2),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // ==================================================
+              // STYLE / SOURCE CHIPS
+              // ==================================================
+
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 10,
+                runSpacing: 10,
                 children: [
                   _chip(
                     icon: Icons.checkroom,
                     label: styleType.toUpperCase(),
                   ),
-                  const SizedBox(width: 12),
                   _chip(
                     icon: Icons.source,
                     label: sourceType.toUpperCase(),
                   ),
                 ],
               ),
-            ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // ---------- Generated outfit image ----------
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                height: 500,
-                decoration: BoxDecoration(
-                  color: AppTheme.bgLight,
-                  border: Border.all(
-                    color: AppTheme.purpleSoft.withOpacity(0.4),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.purpleDeep.withOpacity(0.12),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Image.network(
-                  imagePath,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (
-                    context,
-                    child,
-                    loadingProgress,
-                  ) {
-                    if (loadingProgress == null) {
-                      return child;
-                    }
+              // ==================================================
+              // GENERATED IMAGE
+              // ==================================================
 
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: AppTheme.purpleAccent,
-                        strokeWidth: 4,
-                      ),
-                    );
-                  },
-                  errorBuilder: (
-                    context,
-                    error,
-                    stackTrace,
-                  ) {
-                    return const Center(
-                      child: Text(
-                        "Failed to load generated image",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: AppTheme.inkMuted,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // ---------- Styling Advice ----------
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
+              ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.purpleDeep.withOpacity(0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.lightbulb,
-                        color: AppTheme.purpleAccent,
-                        size: 22,
+                child: Container(
+                  height: imageHeight,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                      color: AppTheme.purpleSoft.withValues(
+                        alpha: 0.4,
                       ),
-                      SizedBox(width: 10),
-                      Text(
-                        "Styling Advice",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.inkDark,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.purpleDeep.withValues(
+                          alpha: 0.12,
                         ),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    stylingAdvice,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                      color: AppTheme.inkMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                  child: imagePath.trim().isEmpty
+                      ? const _ImageError(
+                          message:
+                              'No generated image URL received.',
+                        )
+                      : Image.network(
+                          imagePath.trim(),
 
-            const SizedBox(height: 30),
+                          width: double.infinity,
+                          height: imageHeight,
 
-            // ---------- Download button ----------
-            ElevatedButton.icon(
-              icon: const Icon(Icons.download, color: Colors.white),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.purpleDeep,
-                minimumSize: const Size(double.infinity, 54),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                          // Contain prevents the generated person/outfit
+                          // from being cropped.
+                          fit: BoxFit.contain,
+
+                          // Keep the decoded bitmap bounded for Android.
+                          cacheWidth: imageCacheWidth,
+                          cacheHeight: imageCacheHeight,
+
+                          filterQuality: FilterQuality.low,
+
+                          loadingBuilder: (
+                            context,
+                            child,
+                            loadingProgress,
+                          ) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                color: AppTheme.purpleAccent,
+                                strokeWidth: 4,
+                              ),
+                            );
+                          },
+
+                          errorBuilder: (
+                            context,
+                            error,
+                            stackTrace,
+                          ) {
+                            debugPrint(
+                              'Generated image failed to load: '
+                              '$imagePath',
+                            );
+
+                            debugPrint(
+                              'Image error: $error',
+                            );
+
+                            return const _ImageError(
+                              message:
+                                  'Failed to load generated image.',
+                            );
+                          },
+                        ),
                 ),
               ),
-              onPressed: () {
-                downloadImage(context);
-              },
-              label: const Text(
-                "Download",
-                style: TextStyle(
+
+              const SizedBox(height: 24),
+
+              // ==================================================
+              // STYLING ADVICE
+              // ==================================================
+
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.purpleDeep.withValues(
+                        alpha: 0.06,
+                      ),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-              ),
-            ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb,
+                          color: AppTheme.purpleAccent,
+                          size: 22,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Styling Advice',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.inkDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
 
-            const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-            // ---------- Generate Another Outfit ----------
-            OutlinedButton.icon(
-              icon: const Icon(Icons.refresh),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.purpleDeep,
-                minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                side: const BorderSide(
-                  color: AppTheme.purpleAccent,
-                  width: 1.5,
+                    Text(
+                      stylingAdvice,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                        color: AppTheme.inkMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              label: const Text(
-                "Generate Another Outfit",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+
+              const SizedBox(height: 30),
+
+              // ==================================================
+              // DOWNLOAD
+              // ==================================================
+
+              ElevatedButton.icon(
+                icon: const Icon(
+                  Icons.download,
+                  color: Colors.white,
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.purpleDeep,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(
+                    double.infinity,
+                    54,
+                  ),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => downloadImage(context),
+                label: const Text(
+                  'Download',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 12),
+
+              // ==================================================
+              // GENERATE ANOTHER
+              // ==================================================
+
+              OutlinedButton.icon(
+                icon: const Icon(Icons.refresh),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.purpleDeep,
+                  minimumSize: const Size(
+                    double.infinity,
+                    54,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  side: const BorderSide(
+                    color: AppTheme.purpleAccent,
+                    width: 1.5,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                label: const Text(
+                  'Generate Another Outfit',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ---------- Small style/source chip ----------
-  Widget _chip({required IconData icon, required String label}) {
+  // ============================================================
+  // CHIP
+  // ============================================================
+
+  Widget _chip({
+    required IconData icon,
+    required String label,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 8,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: AppTheme.purpleSoft.withOpacity(0.4),
+          color: AppTheme.purpleSoft.withValues(
+            alpha: 0.4,
+          ),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: AppTheme.purpleDeep),
+          Icon(
+            icon,
+            size: 16,
+            color: AppTheme.purpleDeep,
+          ),
           const SizedBox(width: 6),
           Text(
             label,
@@ -371,3 +523,44 @@ class OutfitResultScreen extends StatelessWidget {
   }
 }
 
+// ============================================================
+// IMAGE ERROR
+// ============================================================
+
+class _ImageError extends StatelessWidget {
+  final String message;
+
+  const _ImageError({
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.image_not_supported_outlined,
+              size: 48,
+              color: AppTheme.inkMuted.withValues(
+                alpha: 0.7,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppTheme.inkMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1066,5 +1066,26 @@
             "engagement party",
             "reception"
         ]
+    },
+    {
+        "id_baju": "scaled_1000179451",
+        "image_path": "/clothes/scaled_1000179451.jpg",
+        "thumbnail_path": "/clothes-thumbnails/scaled_1000179451.jpg",
+        "category": "accessories",
+        "sub_category": "baseball cap",
+        "color": "black",
+        "material": "cotton twill",
+        "fit": "adjustable structured fit",
+        "style": "casual sporty minimalist",
+        "pattern": "solid",
+        "formality_level": "casual",
+        "suitable_occasions": [
+            "daily wear",
+            "outdoor activities",
+            "sports",
+            "travel",
+            "streetwear",
+            "casual outings"
+        ]
     }
 ]

@@ -1,5 +1,8 @@
-from pydantic import BaseModel, Field
+from __future__ import annotations
+
 from typing import List, Optional
+
+from pydantic import BaseModel, Field, field_validator
 
 
 # =====================================================
@@ -7,7 +10,6 @@ from typing import List, Optional
 # =====================================================
 
 class UserFeatures(BaseModel):
-
     gender: str = Field(
         description="User's presentation style or gender expression"
     )
@@ -29,21 +31,14 @@ class UserFeatures(BaseModel):
     )
 
 
-
 class CurrentOutfit(BaseModel):
-
     top: str
-
     bottom: str
-
     shoes: Optional[str] = None
-
     accessories: Optional[str] = None
 
 
-
 class OutfitAnalysis(BaseModel):
-
     advantages: List[str] = Field(
         description="Exactly 2 advantages"
     )
@@ -53,15 +48,10 @@ class OutfitAnalysis(BaseModel):
     )
 
 
-
 class Module1Output(BaseModel):
-
     user_features: UserFeatures
-
     current_outfit: CurrentOutfit
-
     analysis: OutfitAnalysis
-
     comments: str
 
 
@@ -70,29 +60,23 @@ class Module1Output(BaseModel):
 # =====================================================
 
 class WardrobeItemTags(BaseModel):
-
     id_baju: Optional[str] = None
 
+    # Original image used by the AI pipeline.
     image_path: Optional[str] = None
 
+    # Small image used by the Flutter wardrobe UI.
+    thumbnail_path: Optional[str] = None
+
     category: str
-
     sub_category: str
-
     color: str
-
     material: str
-
     fit: str
-
     style: str
-
     pattern: str
-
     formality_level: str
-
     suitable_occasions: List[str]
-
 
 
 # =====================================================
@@ -100,70 +84,67 @@ class WardrobeItemTags(BaseModel):
 # =====================================================
 
 class SelectedWardrobeItem(BaseModel):
-
     id_baju: str
-
     description: str
 
 
-
-# Individual item shopping links
 class ItemShoppingLink(BaseModel):
-
     id_baju: str
-
     description: str
-
     hm: Optional[str] = None
-
     uniqlo: Optional[str] = None
 
 
-
-# Complete shopping links for outfit
 class ShoppingLinks(BaseModel):
-
-    items: List[ItemShoppingLink] = []
-
+    items: List[ItemShoppingLink] = Field(
+        default_factory=list
+    )
 
 
 class OutfitRecommendation(BaseModel):
-
     category: str = Field(
-        description=
-        "Outfit style category, for example Business Formal, Smart Casual, Weekend Casual"
+        description=(
+            "Single outfit style category. "
+            "Examples: Business Formal, Smart Business, "
+            "Smart Casual, Weekend Casual."
+        )
     )
-
 
     selected_items: List[SelectedWardrobeItem] = Field(
-        description=
-        "Wardrobe items selected for this outfit"
+        description="Wardrobe items selected for this outfit"
     )
-
 
     styling_advice: str = Field(
-        description=
-        "Explanation of why this outfit suits the user"
+        description="Explanation of why this outfit suits the user"
     )
-
 
     image_generation_prompt: str = Field(
-        description=
-        "Detailed prompt for generating the outfit image"
+        description="Detailed prompt for generating ONE outfit image"
     )
-
 
     shopping_links: Optional[ShoppingLinks] = None
 
 
-
 class Module3Output(BaseModel):
-
     recommendations: List[OutfitRecommendation] = Field(
-        description=
-        "2 outfit recommendations"
+        min_length=1,
+        max_length=1,
+        description="Exactly 1 outfit recommendation"
     )
 
+    @field_validator("recommendations")
+    @classmethod
+    def validate_exactly_one_recommendation(
+        cls,
+        value: List[OutfitRecommendation],
+    ) -> List[OutfitRecommendation]:
+
+        if len(value) != 1:
+            raise ValueError(
+                "Exactly one outfit recommendation is required."
+            )
+
+        return value
 
 
 # =====================================================
@@ -171,7 +152,5 @@ class Module3Output(BaseModel):
 # =====================================================
 
 class GeneratedImageOutput(BaseModel):
-
     outfit_category: str
-
     image_path: str
